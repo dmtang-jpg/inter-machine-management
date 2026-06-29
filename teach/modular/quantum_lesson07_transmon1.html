@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>第7-8课：Transmon电路</title>
+  <link rel="stylesheet" href="/teach/modular/font-size-selector.js">
+  <script src="/teach/modular/pwd-check.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: #0a0e1a; color: #e0e0e0;
+      font-family: 'Segoe UI', 'Microsoft YaHei', system-ui, sans-serif;
+      min-height: 100vh; padding: 20px; line-height: 1.6;
+    }
+    .slide-container {
+      max-width: 1100px; margin: 0 auto;
+      background: linear-gradient(135deg, #0f172a 0%, #1a1a2e 100%);
+      border-radius: 12px; border: 1px solid #334155; overflow: hidden;
+    }
+    .slide {
+      display: none; padding: 40px 48px; min-height: 560px;
+      animation: fadeIn 0.3s ease-in;
+    }
+    .slide.active { display: block; }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .controls {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 14px 48px; background: #1a1a2e; border-top: 1px solid #334155;
+    }
+    .controls button {
+      background: #6366f1; color: white; border: none;
+      padding: 8px 20px; border-radius: 6px; cursor: pointer; font-size: 14px; font-family: inherit;
+    }
+    .controls button:hover { background: #4f46e5; }
+    .controls button:disabled { background: #4b5563; cursor: not-allowed; }
+    .controls .slide-num { color: #94a3b8; font-size: 14px; }
+
+    h1 { color: #60a5fa; font-size: 28px; margin-bottom: 12px; text-align: center; }
+    h2 { color: #818cf8; font-size: 22px; margin-bottom: 16px; border-bottom: 2px solid #4338ca; padding-bottom: 6px; }
+    h3 { color: #a78bfa; font-size: 18px; margin: 16px 0 8px 0; }
+    p { margin-bottom: 10px; color: #cbd5e1; font-size: 15px; }
+    .subtitle { text-align: center; color: #94a3b8; font-size: 14px; margin-bottom: 8px; }
+    .highlight { color: #fbbf24; font-weight: bold; }
+
+    .concept-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin: 14px 0; }
+    .concept-card {
+      background: linear-gradient(135deg, #1e293b, #0f172a);
+      border: 1px solid #6366f1; border-radius: 8px; padding: 14px 18px;
+    }
+    .concept-card h4 { color: #fbbf24; font-size: 15px; margin-bottom: 6px; }
+    .concept-card p { font-size: 13px; color: #94a3b8; margin-bottom: 4px; }
+
+    .analogy-box {
+      background: linear-gradient(135deg, rgba(99,102,241,0.1), rgba(167,139,250,0.05));
+      border-left: 4px solid #6366f1; border-radius: 0 8px 8px 0;
+      padding: 16px 20px; margin: 12px 0;
+    }
+    .analogy-box h4 { color: #a78bfa; margin-bottom: 8px; }
+    .analogy-box p { font-size: 14px; }
+
+    .math-box {
+      background: linear-gradient(135deg, rgba(99,102,241,0.08), rgba(99,102,241,0.02));
+      border: 1px solid #6366f1; border-radius: 8px; padding: 16px 20px; margin: 12px 0;
+    }
+    .math-box h4 { color: #a78bfa; margin-bottom: 8px; font-size: 15px; }
+    .math-box p { font-size: 14px; color: #cbd5e1; }
+    .formula { 
+      background: rgba(15,23,42,0.8); border-radius: 6px; padding: 10px 14px;
+      margin: 8px 0; text-align: center; font-size: 16px;
+    }
+
+    .quiz-box {
+      background: rgba(34,197,94,0.05); border: 1px solid #22c55e;
+      border-radius: 8px; padding: 16px 20px; margin: 14px 0;
+    }
+    .quiz-box h4 { color: #4ade80; margin-bottom: 8px; }
+    .quiz-box label { display: block; margin: 6px 0; cursor: pointer; }
+    .quiz-box input { margin-right: 8px; }
+    .quiz-box button {
+      background: #16a34a; color: white; border: none; padding: 6px 16px;
+      border-radius: 6px; cursor: pointer; margin-top: 6px;
+    }
+    .quiz-result { margin-top: 10px; padding: 8px 12px; border-radius: 4px; display: none; }
+    .quiz-result.correct { background: rgba(34,197,94,0.15); color: #4ade80; border: 1px solid #22c55e; }
+    .quiz-result.wrong { background: rgba(239,68,68,0.15); color: #f87171; border: 1px solid #ef4444; }
+
+    canvas {
+      background: #0a0e1a; border: 1px solid #334155; border-radius: 8px;
+      display: block; margin: 12px auto;
+    }
+
+    table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 14px; }
+    th { background: #1e293b; color: #fbbf24; padding: 10px 14px; text-align: left; border: 1px solid #334155; }
+    td { background: rgba(15,23,42,0.6); color: #cbd5e1; padding: 10px 14px; border: 1px solid #334155; }
+  </style>
+</head>
+<body>
+  <div class="slide-container">
+    <!-- Slide 1: Title -->
+    <div class="slide active">
+      <div class="subtitle">量子计算入门 · 第7-8课 / Quantum Computing Lesson 7-8</div>
+      <h1>Transmon电路<br><span style="font-size:18px;color:#94a3b8;">Cooper Pair Box & Charge Dispersion</span></h1>
+      <div class="concept-grid" style="grid-template-columns: 1fr;">
+        <div class="concept-card">
+          <h4>学习目标 / Learning Objectives</h4>
+          <p>1. 理解库珀对盒子哈密顿量 / Understand Cooper pair box Hamiltonian</p>
+          <p>2. 掌握 Charge qubit vs Transmon 的能谱对比</p>
+          <p>3. 理解电荷色散与噪声免疫 / Charge dispersion and noise immunity</p>
+          <p>4. 了解 Transmon 与谐振腔的耦合读出</p>
+        </div>
+      </div>
+      <p align="center" style="margin-top:20px;color:#a78bfa;">
+        <b>教学方式</b>：讲授 · 推导 · 能谱可视化 / <b>课时</b>：45分钟
+      </p>
+    </div>
+
+    <!-- Slide 2: Cooper Pair Box -->
+    <div class="slide">
+      <h2>库珀对盒子 / Cooper Pair Box</h2>
+      <p>一个超导小岛通过约瑟夫森结连接到大块超导体（储库）：</p>
+      <div class="concept-grid">
+        <div class="concept-card">
+          <h4>结构</h4>
+          <p>• 超导岛通过结连接超导储库</p>
+          <p>• 门电容 C_g 通过门电压 V_g 调节</p>
+          <p>• 岛上有整数个库珀对 n</p>
+          <p>• 总电容 C_Σ = C_J + C_g</p>
+        </div>
+        <div class="concept-card">
+          <h4>两个能量尺度</h4>
+          <p>• E_J: 约瑟夫森能量（结）</p>
+          <p>• E_C: 单电子充电能（gate控制）</p>
+          <p>• 比值 E_J/E_C 决定比特性质</p>
+        </div>
+      </div>
+      <div class="math-box">
+        <h4>Charge Qubit 哈密顿量 / Charge Qubit Hamiltonian</h4>
+        <div class="formula">
+          Ĥ = 4Ê_C(�̂ - n_g)² - Ê_J cos(φ̂)
+        </div>
+        <p>其中：Ê_C = e²/(2C_Σ)，Ê_J = I_cΦ₀/(2π)，n_g = C_g V_g/e 是归一化门电荷</p>
+        <p>对易关系：[φ̂, �̂] = i（相位-电荷不确定）</p>
+      </div>
+      <div style="display:flex;justify-content:center;">
+        <canvas id="cpbCanvas" width="520" height="320"></canvas>
+      </div>
+    </div>
+
+    <!-- Slide 3: Cooper Pair Box Wave Function -->
+    <div class="slide">
+      <h2>Charge Qubit 能谱 / Charge Qubit Energy Spectrum</h2>
+      <div class="math-box">
+        <h4>在电荷基展开 / Charge Basis Expansion</h4>
+        <div class="formula">
+          Ĥ = Σ<sub>n</sub> 4Ê_C(n - n_g)² |n⟩⟨n| - Ê_J/2 Σ<sub>n</sub> (|n⟩⟨n+1| + |n+1⟩⟨n|)
+        </div>
+        <p>矩阵元：⟨m|Ĥ|n⟩ = 4Ê_C(n-n_g)² δ_{mn} - Ê_J/2 (δ_{m,n+1} + δ_{m+1,n})</p>
+      </div>
+      <div class="math-box">
+        <h4>m 能级随 n_g 的变化 / Energy vs n_g</h4>
+        <div class="formula">
+          E_m(n_g) = E_C [ (2m+1) - (2m+1)(n_g mod 1) + ... ]
+        </div>
+        <p>能级交叉发生在 n_g = 1/2（简并点）</p>
+      </div>
+      <div style="display:flex;justify-content:center;">
+        <canvas id="spectrumCanvas" width="600" height="340"></canvas>
+      </div>
+      <p style="text-align:center;color:#94a3b8;font-size:12px;">能级 E_m 随门电荷 n_g 变化。在简并点 n_g = 1/2, 3/2,... 处能隙最小 = E_J</p>
+    </div>
+
+    <!-- Slide 4: Charge Dispersion -->
+    <div class="slide">
+      <h2>电荷色散 / Charge Dispersion</h2>
+      <div class="math-box">
+        <h4>定义 / Definition</h4>
+        <div class="formula">
+          χ_m(n_g) = E_m(n_g) - E_0(n_g)  (相对于基态的能量差)
+        </div>
+        <p>色散大小 = 最大变化幅度：Δχ = χ(n_g) - χ(1/2)</p>
+      </div>
+      <div class="math-box">
+        <h4>为什么色散有害？</h4>
+        <p>门电荷噪声（δn_g ≠ 0）→ 能级能量变化 → 相位退相干</p>
+        <div class="formula">
+          退相干率：Γ ∝ (∂ω/∂n_g)² S_{n_g}
+        </div>
+      </div>
+      <div class="analogy-box">
+        <h4>经典类比：吉他弦走音</h4>
+        <p>吉他弦张力 = n_g，音高 = ω(m,n_g)。张力随机波动 → 音高抖动 → 退相干。</p>
+        <p>Transmon = 增加张力使音高不再随张力变化（平坦区域）。</p>
+      </div>
+    </div>
+
+    <!-- Slide 5: Transmon Solution -->
+    <div class="slide">
+      <h2>Transmon：E_J/E_C \gg 1 极限</h2>
+      <div class="concept-grid">
+        <div class="concept-card">
+          <h4>Charge Qubit 的问题</h4>
+          <p>• E_J/E_C ≪ 1</p>
+          <p>• 电荷色散 ≈ E_C</p>
+          <p>• 对电荷噪声敏感</p>
+          <p>• T₂ ~ 100 ns（早期 device）</p>
+        </div>
+        <div class="concept-card">
+          <h4>Transmon 的解决</h4>
+          <p>• E_J/E_C ~ 50-100</p>
+          <p>• 电荷色散指数压低</p>
+          <p>• T₂ ~ 50-200 μs</p>
+          <p>• 代价：弱非线性（非谐性 α）降低</p>
+        </div>
+      </div>
+      <div class="math-box">
+        <h4>色散指数压低 / Exponential Suppression of Dispersion</h4>
+        <div class="formula">
+          Δχ  ∝  exp(-√(8E_J/E_C))
+        </div>
+        <p>这是隧穿效应通过势垒的指数衰减。</p>
+      </div>
+      <div class="math-box">
+        <h4>Transmon 能谱参数 / Spectrum Parameters</h4>
+        <div class="formula">
+          ω₁₀ = (√(8E_J E_C) - E_C)/ℏ
+        </div>
+        <div class="formula">
+          非谐性：α = -E_C/ℏ
+        </div>
+        <p>非谐性 α 决定了 |0⟩→|1⟩ 和 |1⟩→|2⟩ 的频率差。</p>
+      </div>
+    </div>
+
+    <!-- Slide 6: Transmon Hamiltonian Derivation -->
+    <div class="slide">
+      <h2>Transmon 哈密顿量推导 / Hamiltonian Derivation</h2>
+      <div class="math-box">
+        <h4>从 Transmon 哈密顿量出发 / Hamiltonian</h4>
+        <div class="formula">
+          Ĥ = 4E_C �̂² - E_J cos(φ̂)
+        </div>
+        <p>（大E_J/E_C极限下忽略n_g偏移，此处简化 n_g=0）</p>
+      </div>
+      <div class="math-box">
+        <h4>谐振子展开 / Harmonic Oscillator Expansion</h4>
+        <div class="formula">
+          φ̂ ≪ 1 ⇒ cos(φ̂) ≈ 1 - φ̂²/2 + φ̂⁴/24 - ...
+        </div>
+        <p>�̂_zpf = (2E_C/E_J)^{1/4} 是零点涨落。</p>
+        <div class="formula">
+          Ĥ ≈ √(8E_J E_C) (â†â + 1/2) - E_C â†â(â†â+1) + ...
+        </div>
+      </div>
+      <div class="math-box">
+        <h4>参数谐振子图像 / Parametric Oscillator Picture</h4>
+        <div class="formula">
+          â = √(2/E_J E_C) �̂,  iℏ[â, â†] = 1
+        </div>
+        <p>定义 â, â† 后，Ĥ = ℏωâ†â + O((E_J E_C)^{-1/3})</p>
+      </div>
+    </div>
+
+    <!-- Slide 7: Resonator Coupling & Readout -->
+    <div class="slide">
+      <h2>谐振腔耦合与读出 / Resonator Coupling & Readout</h2>
+      <div class="concept-grid">
+        <div class="concept-card">
+          <h4>电容耦合</h4>
+          <p>Transmon 通过电容 g 耦合到谐振腔</p>
+          <p>耦合强度 g ~ 100 MHz</p>
+        </div>
+        <div class="concept-card">
+          <h4>色散读出</h4>
+          <p>腔频率偏移取决于 Transmon 态</p>
+          <p>ω_c → ω_c + χ |1⟩, ω_c + 2χ |2⟩...</p>
+        </div>
+      </div>
+      <div class="math-box">
+        <h4>Jaynes-Cummings 哈密顿量 / Jaynes-Cummings Hamiltonian</h4>
+        <div class="formula">
+          Ĥ_sub = ℏω_c â†â + (ℏω_1₀/2) σ_z + ℏg (âσ₊ + â†σ₋)
+        </div>
+        <p>σ_z 是 Transmon 泡利算符（最低两能级），â 是腔模算符。</p>
+      </div>
+      <div class="math-box">
+        <h4>色散移位 / Dispersive Shift</h4>
+        <div class="formula">
+          χ = g²/(Δ(Δ - α)),　 Δ = ω₁₀ - ω_c,　 α = -E_C/ℏ
+        </div>
+        <p>通过测量反射系数或透射系数，判断 Transmon 状态。</p>
+      </div>
+    </div>
+
+    <!-- Slide 8: Quiz -->
+    <div class="slide">
+      <h2>课堂互动 / Quiz</h2>
+      <div class="quiz-box">
+        <h4>问题1：Charge qubit 的能级在 n_g = 1/2 处</h4>
+        <label><input type="radio" name="q1" value="wrong"> A. 能级交叉（避免交叉）</label>
+        <label><input type="radio" name="q1" value="correct"> B. 能隙最小，对噪声最敏感</label>
+        <label><input type="radio" name="q1" value="wrong"> C. 能级简并</label>
+        <button onclick="checkQuiz1()">检查答案</button>
+        <div id="quiz-result-1" class="quiz-result"></div>
+      </div>
+      <div class="quiz-box">
+        <h4>问题2：Transmon 相比 Charge qubit 的优势是</h4>
+        <label><input type="radio" name="q2" value="wrong"> A. 对电荷噪声更敏感</label>
+        <label><input type="radio" name="q2" value="wrong"> B. 非谐性增强</label>
+        <label><input type="radio" name="q2" value="correct"> C. 电荷色散指数压低，T₂ 更长</label>
+        <button onclick="checkQuiz2()">检查答案</button>
+        <div id="quiz-result-2" class="quiz-result"></div>
+      </div>
+    </div>
+
+    <!-- Slide 9: Summary -->
+    <div class="slide" style="text-align:center;">
+      <h2>课堂总结 / Summary</h2>
+      <div class="concept-grid">
+        <div class="concept-card">
+          <h4>1. Cooper pair box</h4>
+          <p>• Ĥ = 4E_C(n̂-n_g)² - E_J cos(φ̂)</p>
+          <p>• E_J/E_C 比决定比特性质</p>
+        </div>
+        <div class="concept-card">
+          <h4>2. 电荷色散</h4>
+          <p>• Δχ ≈ E_C（charge bit）</p>
+          <p>• Δχ ∝ e^{-√(8E_J/E_C)} (Transmon)</p>
+        </div>
+        <div class="concept-card">
+          <h4>3. Transmon 参数</h4>
+          <p>• ω₁₀ = (√(8E_J E_C) - E_C)/ℏ</p>
+          <p>• α = -E_C/ℏ</p>
+        </div>
+        <div class="concept-card">
+          <h4>4. 读出</h4>
+          <p>• 色散移位 χ = g²/(Δ(Δ-α))</p>
+          <p>• Jaynes-Cummings 耦合 g</p>
+        </div>
+      </div>
+      <div class="analogy-box" style="text-align:left;">
+        <h4>下节课预告</h4>
+        <p>第9课：量子门与电路 —— 通用量子计算、单比特门分解、谐振读出</p>
+      </div>
+    </div>
+
+    <!-- Controls -->
+    <div class="controls">
+      <button id="prev" onclick="navigate(-1)">← 上一页</button>
+      <span class="slide-num" id="slideNum">1 / 9</span>
+      <button id="next" onclick="navigate(1)">下一页 →</button>
+    </div>
+  </div>
+
+  <script>
+    let current = 1;
+    const totalSlides = 9;
+
+    function navigate(dir) {
+      const newSlide = current + dir;
+      if (newSlide < 1 || newSlide > totalSlides) return;
+      const slides = document.querySelectorAll('.slide');
+      slides[current - 1].classList.remove('active');
+      slides[newSlide - 1].classList.add('active');
+      current = newSlide;
+      document.getElementById('slideNum').textContent = current + ' / ' + totalSlides;
+      document.getElementById('prev').disabled = (current === 1);
+      document.getElementById('next').disabled = (current === totalSlides);
+      if (current === 2) drawCPB();
+      if (current === 3) drawSpectrum();
+    }
+
+    function checkQuiz1() {
+      const result = document.getElementById('quiz-result-1');
+      const selected = document.querySelector('input[name="q1"]:checked');
+      if (!selected) { result.style.display = 'block'; result.className = 'quiz-result wrong'; result.textContent = '请选择一个选项'; return; }
+      if (selected.value === 'correct') {
+        result.style.display = 'block'; result.className = 'quiz-result correct';
+        result.innerHTML = '<b>正确！</b>在 n_g = 1/2 处，相邻能级间距最小（能隙 = E_J），对电荷噪声最敏感。';
+      } else {
+        result.style.display = 'block'; result.className = 'quiz-result wrong';
+        result.innerHTML = '<b>错误。</b>在 n_g = 1/2 处，能隙最小，对噪声最敏感。这是 charge qubit 的弱点。';
+      }
+    }
+
+    function checkQuiz2() {
+      const result = document.getElementById('quiz-result-2');
+      const selected = document.querySelector('input[name="q2"]:checked');
+      if (!selected) { result.style.display = 'block'; result.className = 'quiz-result wrong'; result.textContent = '请选择一个选项'; return; }
+      if (selected.value === 'correct') {
+        result.style.display = 'block'; result.className = 'quiz-result correct';
+        result.innerHTML = '<b>正确！</b>Transmon 的 E_J/E_C ≫ 1，电荷色散指数压低，T₂ 显著延长。';
+      } else {
+        result.style.display = 'block'; result.className = 'quiz-result wrong';
+        result.innerHTML = '<b>错误。</b>Transmon 的优势是电荷色散指数压低，T₂ 更长。代价是非谐性降低。';
+      }
+    }
+
+    // Draw Cooper pair box
+    function drawCPB() {
+      const canvas = document.getElementById('cpbCanvas');
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      const W = canvas.width, H = canvas.height;
+      ctx.clearRect(0, 0, W, H);
+      
+      const cx = W / 2, cy = H / 2;
+      
+      // Superconducting reservoir (left)
+      ctx.fillStyle = '#60a5fa';
+      ctx.fillRect(20, cy - 50, 80, 100);
+      ctx.strokeStyle = '#60a5fa';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(20, cy - 50, 80, 100);
+      ctx.fillStyle = '#94a3b8';
+      ctx.font = '11px sans-serif';
+      ctx.fillText('储库', 45, cy + 5);
+      ctx.fillText('(Reservoir)', 30, cy + 70);
+      
+      // Josephson junction (center)
+      ctx.fillStyle = '#fbbf24';
+      ctx.fillRect(cx - 25, cy - 35, 50, 70);
+      ctx.strokeStyle = '#fbbf24';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(cx - 25, cy - 35, 50, 70);
+      ctx.fillStyle = '#94a3b8';
+      ctx.font = '10px sans-serif';
+      ctx.fillText('JJ', cx - 8, cy + 5);
+      
+      // Island (right)
+      ctx.fillStyle = '#a78bfa';
+      ctx.fillRect(W - 100, cy - 40, 80, 80);
+      ctx.strokeStyle = '#a78bfa';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(W - 100, cy - 40, 80, 80);
+      ctx.fillStyle = '#94a3b8';
+      ctx.font = '11px sans-serif';
+      ctx.fillText('岛 (Island)', W - 85, cy + 5);
+      
+      // Gate capacitor
+      ctx.strokeStyle = '#4ade80';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(W - 100, cy - 40);
+      ctx.lineTo(W - 130, cy - 40);
+      ctx.moveTo(W - 100, cy + 40);
+      ctx.lineTo(W - 130, cy + 40);
+      ctx.stroke();
+      ctx.fillStyle = '#4ade80';
+      ctx.font = '10px sans-serif';
+      ctx.fillText('C_g', W - 145, cy);
+      
+      // Gate voltage
+      ctx.strokeStyle = '#4ade80';
+      ctx.beginPath();
+      ctx.moveTo(W - 130, cy - 40);
+      ctx.lineTo(W - 130, cy - 60);
+      ctx.lineTo(W - 130, cy + 40);
+      ctx.stroke();
+      ctx.fillText('V_g', W - 155, cy - 55);
+      
+      // Current arrow
+      ctx.strokeStyle = '#6366f1';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(100, cy);
+      ctx.lineTo(cx - 25, cy);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(cx + 25, cy);
+      ctx.lineTo(W - 100, cy);
+      ctx.stroke();
+      
+      // Labels
+      ctx.fillStyle = '#94a3b8';
+      ctx.font = '11px sans-serif';
+      ctx.fillText('E_J (约瑟夫森)', cx - 40, cy - 50);
+      ctx.fillText('E_C (充电能)', W - 90, cy + 60);
+    }
+
+    // Draw energy spectrum
+    function drawSpectrum() {
+      const canvas = document.getElementById('spectrumCanvas');
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      const W = canvas.width, H = canvas.height;
+      ctx.clearRect(0, 0, W, H);
+      
+      const x0 = 60, y0 = H - 50;
+      const xScale = (W - 100) / 2;
+      const yScale = (H - 100) / 5;
+      
+      // Axes
+      ctx.strokeStyle = '#334155';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(x0, 30);
+      ctx.lineTo(x0, y0);
+      ctx.lineTo(W - 30, y0);
+      ctx.stroke();
+      
+      // Labels
+      ctx.fillStyle = '#94a3b8';
+      ctx.font = '12px sans-serif';
+      ctx.fillText('E / E_C', x0 - 50, 50);
+      ctx.fillText('n_g', W - 50, y0 + 20);
+      
+      // n_g axis ticks
+      for (let i = 0; i <= 2; i++) {
+        const x = x0 + i * xScale;
+        ctx.fillText(i.toString(), x - 3, y0 + 15);
+        ctx.beginPath();
+        ctx.moveTo(x, y0);
+        ctx.lineTo(x, y0 + 5);
+        ctx.stroke();
+      }
+      
+      // Energy levels (simplified)
+      const colors = ['#6366f1', '#a78bfa', '#fbbf24'];
+      for (let m = 0; m < 3; m++) {
+        ctx.strokeStyle = colors[m];
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        for (let x = x0; x < W - 30; x += 2) {
+          const ng = (x - x0) / xScale;
+          // Simplified energy: E_m = E_C * (m + 0.5)^2 * (2ng - 1)^2 + E_J * (m + 0.5)
+          const E = (m + 0.5) * (2 * ng - 1) * (2 * ng - 1) + 0.3 * (m + 0.5);
+          const y = y0 - E * yScale;
+          if (x === x0) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+        }
+        ctx.stroke();
+        
+        // Label
+        ctx.fillStyle = colors[m];
+        ctx.font = '12px sans-serif';
+        ctx.fillText(`|${m}⟩`, W - 50, y0 - ((m + 0.5) * 0 + 0.3 * (m + 0.5)) * yScale + 10);
+      }
+      
+      // Degeneracy point marker
+      ctx.strokeStyle = '#4ade80';
+      ctx.setLineDash([3, 3]);
+      ctx.beginPath();
+      ctx.moveTo(x0 + xScale, 30);
+      ctx.lineTo(x0 + xScale, y0);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle = '#4ade80';
+      ctx.font = '11px sans-serif';
+      ctx.fillText('简并点', x0 + xScale - 15, y0 + 30);
+    }
+
+    // Keyboard navigation
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'ArrowRight' || e.key === ' ') navigate(1);
+      else if (e.key === 'ArrowLeft') navigate(-1);
+    });
+
+    // Initialize KaTeX
+    document.addEventListener('DOMContentLoaded', function() {
+      renderMath(document.body);
+    });
+
+    function renderMath(container) {
+      const mathElements = container.querySelectorAll('.formula');
+      mathElements.forEach(el => {
+        if (!el.dataset.katexRendered) {
+          const spans = el.querySelectorAll('span.math');
+          spans.forEach(span => {
+            if (!span.dataset.katexRendered) {
+              katex.render(span.textContent, span, { throwOnError: false, displayMode: span.classList.contains('katex-display') });
+              span.dataset.katexRendered = 'true';
+            }
+          });
+          el.dataset.katexRendered = 'true';
+        }
+      });
+    }
+  </script>
+</body>
+</html>

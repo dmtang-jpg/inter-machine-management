@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>数学量子物理准备知识 — 量子计算入门</title>
+  <link rel="stylesheet" href="/teach/modular/font-size-selector.js">
+  <script src="/teach/modular/pwd-check.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: #0a0e1a; color: #e0e0e0;
+      font-family: 'Segoe UI', 'Microsoft YaHei', system-ui, sans-serif;
+      min-height: 100vh; padding: 20px; line-height: 1.7;
+    }
+    .container {
+      max-width: 1100px; margin: 0 auto;
+      background: linear-gradient(135deg, #0f172a 0%, #1a1a2e 100%);
+      border-radius: 12px; border: 1px solid #334155;
+      padding: 40px 48px;
+    }
+    h1 { color: #60a5fa; font-size: 28px; margin-bottom: 12px; text-align: center; }
+    .subtitle { text-align: center; color: #94a3b8; font-size: 14px; margin-bottom: 24px; }
+    h2 { color: #818cf8; font-size: 20px; margin: 24px 0 12px 0; border-bottom: 2px solid #4338ca; padding-bottom: 6px; }
+    h3 { color: #a78bfa; font-size: 17px; margin: 16px 0 8px 0; }
+    p { margin-bottom: 10px; color: #cbd5e1; font-size: 15px; }
+    
+    .math-box {
+      background: linear-gradient(135deg, rgba(99,102,241,0.08), rgba(99,102,241,0.02));
+      border: 1px solid #6366f1; border-radius: 8px;
+      padding: 16px 20px; margin: 12px 0;
+    }
+    .math-box h4 { color: #a78bfa; margin-bottom: 8px; font-size: 15px; }
+    .formula {
+      background: rgba(15,23,42,0.8); border-radius: 6px;
+      padding: 12px 16px; margin: 8px 0; text-align: center; font-size: 16px;
+    }
+    
+    .analogy-box {
+      background: linear-gradient(135deg, rgba(99,102,241,0.1), rgba(167,139,250,0.05));
+      border-left: 4px solid #6366f1; border-radius: 0 8px 8px 0;
+      padding: 16px 20px; margin: 12px 0;
+    }
+    .analogy-box h4 { color: #a78bfa; margin-bottom: 8px; }
+    
+    .concept-card {
+      background: linear-gradient(135deg, #1e293b, #0f172a);
+      border: 1px solid #6366f1; border-radius: 8px;
+      padding: 14px 18px; margin: 10px 0;
+    }
+    .concept-card h4 { color: #fbbf24; font-size: 15px; margin-bottom: 6px; }
+    .concept-card p { font-size: 13px; color: #94a3b8; margin-bottom: 4px; }
+    
+    .highlight { color: #fbbf24; font-weight: bold; }
+    .warn { color: #f87171; }
+    
+    .toc { background: rgba(15,23,42,0.5); border: 1px solid #334155; border-radius: 8px; padding: 16px 20px; margin: 16px 0; }
+    .toc h3 { color: #60a5fa; margin-bottom: 8px; }
+    .toc a { color: #818cf8; text-decoration: none; display: block; margin: 4px 0; }
+    .toc a:hover { color: #fbbf24; }
+    
+    .link-box {
+      background: rgba(34,197,94,0.05); border: 1px solid #22c55e;
+      border-radius: 8px; padding: 16px 20px; margin: 14px 0;
+    }
+    .link-box h4 { color: #4ade80; margin-bottom: 8px; }
+    .link-box a { color: #4ade80; text-decoration: underline; }
+    
+    .controls { text-align: center; margin-top: 30px; padding: 14px; background: #1a1a2e; border-radius: 8px; }
+    .controls button {
+      background: #6366f1; color: white; border: none;
+      padding: 8px 20px; border-radius: 6px; cursor: pointer; font-size: 14px; font-family: inherit;
+    }
+    .controls button:hover { background: #4f46e5; }
+  </style>
+</head>
+<body>
+<div class="container">
+  <div class="subtitle">量子计算入门 · 预备知识 / Prerequisites</div>
+  <h1>数学量子物理准备知识</h1>
+  
+  <div class="toc">
+    <h3>📋 本节目录 / Contents</h3>
+    <a href="#complex">1. 复数与欧拉公式</a>
+    <a href="#hermitian">2. 厄米算符与本征分解</a>
+    <a href="#time-evolution">3. 时间演化算符</a>
+    <a href="#qho">4. 量子谐振子</a>
+    <a href="#rabi">5. Rabi 振荡与旋转坐标系</a>
+    <a href="#references">📚 延伸阅读</a>
+  </div>
+
+  <!-- ========== Section 1: Complex Numbers ========== -->
+  <h2 id="complex">1. 复数与欧拉公式 / Complex Numbers & Euler's Formula</h2>
+  
+  <p>量子力学中，波函数和概率幅是<strong>复数</strong>。理解复数是学习量子计算的第一步。</p>
+  
+  <div class="math-box">
+    <h4>复数的表示 / Representations</h4>
+    <div class="formula">
+      z = a + bi = r e<sup>iφ</sup> = r(cos φ + i sin φ),　 where i² = -1
+    </div>
+    <p>r = |z| 是模（magnitude），φ 是辐角（argument）。</p>
+    <p>复数的共轭：z* = a - bi = r e<sup>-iφ</sup></p>
+  </div>
+  
+  <div class="math-box">
+    <h4>欧拉公式 / Euler's Formula</h4>
+    <div class="formula">
+      e<sup>iθ</sup> = cos θ + i sin θ
+    </div>
+    <div class="formula">
+      cos θ = (e<sup>iθ</sup> + e<sup>-iθ</sup>)/2,　 sin θ = (e<sup>iθ</sup> - e<sup>-iθ</sup>/(2i)
+    </div>
+    <p>欧拉公式是<strong>连接指数函数和三角函数</strong>的桥梁，在量子力学中无处不在。</p>
+  </div>
+  
+  <div class="analogy-box">
+    <h4>欧拉公式的物理直觉</h4>
+    <p>e<sup>iθ</sup> 在复平面上表示一个单位圆上的点。当 θ 连续变化时，点沿单位圆旋转。</p>
+    <p>这就是为什么量子态中的相位可以看作"旋转"——每个能级的概率幅以不同角频率 e<sup>-iEₙt/ℏ</sup> 旋转。</p>
+  </div>
+  
+  <div class="math-box">
+    <h4>全局相位 vs 相对相位 / Global vs Relative Phase</h4>
+    <div class="formula">
+      |ψ'⟩ = e<sup>iα</sup> e<sup>iβ</sup>|ψ⟩
+    </div>
+    <p>由于 e<sup>iα+iβ</sup> = e<sup>iα</sup> · e<sup>iβ</sup>，全局相位不影响任何测量结果。</p>
+  </div>
+  
+  <div class="concept-card">
+    <h4>在哪里会用到？</h4>
+    <p>• <a href="quantum_lesson01_why_qc.html#complex" style="color:#fbbf24;">第1课</a>：概率幅 α,β ∈ ℂ，布洛赫球参数化中的 e^(iφ)</p>
+    <p>• <a href="quantum_lesson02_quantum_props.html#complex" style="color:#fbbf24;">第2课</a>：薛定谔方程中的 iℏ 和复波函数</p>
+    <p>• <a href="quantum_lesson05_measurement.html#complex" style="color:#fbbf24;">第5课</a>：Lindblad 方程中的复数退相位</p>
+  </div>
+
+  <!-- ========== Section 2: Hermitian ========== -->
+  <h2 id="hermitian">2. 厄米算符与本征分解 / Hermitian Operators & Eigendecomposition</h2>
+  
+  <p>量子力学中，<strong>可观测量</strong>（能量、自旋、位置等）对应<strong>厄米算符</strong>。理解厄米算符是理解测量的关键。</p>
+  
+  <div class="math-box">
+    <h4>定义 / Definition</h4>
+    <div class="formula">
+      算符 Ĥ 是厄米的，若 Ĥ = Ĥ† （等于自身的厄米共轭）
+    </div>
+    <p>厄米算符有两个关键性质：</p>
+    <div class="formula">
+      本征值都是实数：Ĥ|ψₙ⟩ = Eₙ|ψₙ⟩,　 Eₙ ∈ ℝ
+    </div>
+    <div class="formula">
+      不同本征值的本征态正交：⟨ψₘ|ψₙ⟩ = δₘₙ
+    </div>
+  </div>
+  
+  <div class="math-box">
+    <h4>谱分解 / Spectral Decomposition</h4>
+    <div class="formula">
+      Ĥ = Σ Eₙ |ψₙ⟩⟨ψₙ|
+    </div>
+    <p>任何厄米算符都可以写成其本征态的"加权和"。|ψₙ⟩⟨ψₙ| 是本征态上的投影算符。</p>
+    <div class="formula">
+      完备性关系（closure relation）：Σ |ψₙ⟩⟨ψₙ| = I（单位算符）
+    </div>
+  </div>
+  
+  <div class="analogy-box">
+    <h4>物理意义</h4>
+    <p>厄米算符的本征值 = 测量可能得到的结果。</p>
+    <p>本征态 = 测量后系统会坍缩到的状态。</p>
+    <p>能量算符 Ĥ 的本征态 = 定态（stationary states）。</p>
+  </div>
+  
+  <div class="math-box">
+    <h4>物理学中的厄米算符 / Common Hermitian Operators</h4>
+    <p>• 能量（哈密顿量）：Ĥ = -ℏ²/(2m) ∇² + V(x)</p>
+    <p>• 动量：p̂ = -iℏ d/dx</p>
+    <p>• 角动量：L̂ = r × p̂</p>
+    <p>• 自旋：Ŝ = (ℏ/2) σ</p>
+  </div>
+  
+  <div class="concept-card">
+    <h4>在哪里会用到？</h4>
+    <p>• <a href="quantum_lesson05_measurement.html#hermitian" style="color:#fbbf24;">第5课</a>：测量公设和 POVM 形式</p>
+    <p>• <a href="quantum_lesson02_quantum_props.html#hermitian" style="color:#fbbf24;">第2课</a>：能量本征态和薛定谔方程</p>
+    <p>• <a href="quantum_lesson06_superconducting.html#hermitian" style="color:#fbbf24;">第6课</a>：BCS 哈密顿量</p>
+  </div>
+
+  <!-- ========== Section 3: Time Evolution ========== -->
+  <h2 id="time-evolution">3. 时间演化算符 / Time Evolution Operator</h2>
+  
+  <p>含时薛定谔方程 iℏ ∂|ψ⟩/∂t = Ĥ|ψ⟩ 的解是什么？它给出时间演化算符。</p>
+  
+  <div class="math-box">
+    <h4>形式解 / Formal Solution</h4>
+    <div class="formula">
+      |ψ(t)⟩ = e<sup>-iĤt/ℏ</sup> |ψ(0)⟩
+    </div>
+    <p>其中 <span class="highlight">Û(t) = e<sup>-iĤt/ℏ</sup></span> 是时间演化算符（time evolution operator）。</p>
+    <div class="formula">
+      Û(t) = Σ e<sup>-iEₙt/ℏ</sup> |ψₙ⟩⟨ψₙ|
+    </div>
+  </div>
+  
+  <div class="analogy-box">
+    <h4>物理直觉</h4>
+    <p>时间演化算符 e<sup>-iĤt/ℏ</sup> 是一个<strong>旋转操作</strong>。</p>
+    <p>每个本征态 |ψₙ⟩ 以角频率 ωₙ = Eₙ/ℏ"旋转"（获得相位因子 e<sup>-iωₙt</sup>）。</p>
+    <p>不同能量的本征态获得不同相位 → 导致叠加态的"形状"随时间变化。</p>
+  </div>
+  
+  <div class="math-box">
+    <h4>在能量本征基下 / In Energy Eigenbasis</h4>
+    <div class="formula">
+      |ψ(t)⟩ = Σ cₙ e<sup>-iEₙt/ℏ</sup> |ψₙ⟩,　 其中 cₙ = ⟨ψₙ|ψ(0)⟩
+    </div>
+    <p>系数 cₙ 不随时间变化！只有相位因子旋转。可观测效应来自交叉项（干涉）。</p>
+  </div>
+  
+  <div class="concept-card">
+    <h4>在哪里会用到？</h4>
+    <p>• <a href="quantum_lesson07_transmon1.html#time-evo" style="color:#fbbf24;">第7课</a>：Transmon 门操作 = 演化</p>
+    <p>• <a href="quantum_lesson05_measurement.html#time-evo" style="color:#fbbf24;">第5课</a>：Rabi 振荡推导</p>
+    <p>• <a href="quantum_lesson09_gates.html#time-evo" style="color:#fbbf24;">第9课</a>：量子门 = 受控时间演化</p>
+  </div>
+
+  <!-- ========== Section 4: QHO ========== -->
+  <h2 id="qho">4. 量子谐振子 / Quantum Harmonic Oscillator</h2>
+  
+  <p>Transmon 的物理基础是量子谐振子。从弹簧到量子化 LC 电路，理解 QHO 是必经之路。</p>
+  
+  <div class="math-box">
+    <h4>哈密顿量 / Hamiltonian</h4>
+    <div class="fraction">
+      Ĥ = $\frac{p̂²}{2m} + \frac{1}{2}mω²x̂²$
+    </div>
+    <div class="fraction">
+      Ĥ = ℏω (â†â + 1/2) = ℏω â†â + ℏω/2
+    </div>
+    <p>其中 â = (mω/(2ℏ))<sup>1/2</sup> (x̂ + i p̂/(mω)) 是湮灭算符。</p>
+  </div>
+  
+  <div class="math-box">
+    <h4>能谱 / Energy Spectrum</h4>
+    <div class="formula">
+      Eₙ = ℏω (n + 1/2),　 n = 0, 1, 2, ...
+    </div>
+    <div class="formula">
+      â†â |n⟩ = √(n+1) |n+1⟩,　 â |n⟩ = √n |n-1⟩
+    </div>
+    <p>能级<strong>等间距</strong>！零点能 ℏω/2 来自 [x̂, p̂] = iℏ 对易关系。</p>
+  </div>
+  
+  <div class="analogy-box">
+    <h4>为什么 Transmon 会"丢掉 1/2"？</h4>
+    <p>Transmon 的能级是 <strong>不等间距</strong>（非谐性）：Eₙ ≠ ℏω(n+1/2)</p>
+    <p>但如果定义零态 â† â（粒子-空穴对称），零点能的常数 ℏω/2 被吸收到零态能量的定义中。</p>
+    <p>Transmon 写作 â† â 而非 Ĥ = ℏω(â†â + 1/2)，是因为：零点能只是一个常数偏移，不影响动力学。</p>
+  </div>
+  
+  <div class="math-box">
+    <h4>粒子数-相位不确定性</h4>
+    <div class="formula">
+      [â, â†] = 1,　 [φ̂, n̂] = i
+    </div>
+    <p>粒子数 n̂ = â†â 和相位 φ̂ 是一对<strong>共轭变量</strong>。</p>
+    <p>n̂ 确定 → φ̂ 完全不确定（类似 [x̂, p̂] = iℏ）</p>
+  </div>
+  
+  <div class="concept-card">
+    <h4>在哪里会用到？</h4>
+    <p>• <a href="quantum_lesson07_transmon1.html#qho" style="color:#fbbf24;">第7课</a>：Transmon = 非谐 QHO</p>
+    <p>• <a href="quantum_lesson08_transmon2.html#qho" style="color:#fbbf24;">第8课</a>：Transmon 谐振腔耦合</p>
+    <p>• <a href="quantum_lesson06_superconducting.html#qho" style="color:#fbbf24;">第6课</a>：电路量子化</p>
+  </div>
+
+  <!-- ========== Section 5: Rabi ========== -->
+  <h2 id="rabi">5. Rabi 振荡与旋转坐标系 / Rabi Oscillations & Rotating Frame</h2>
+  
+ <p>Rabi 旋进是量子二能级系统在周期驱动下的基本动力学，也是量子门操作的基础。</p>
+  
+  <div class="math-box">
+    <h4>二能级系统的哈密顿量 / Two-Level System Hamiltonian</h4>
+    <div class="formula">
+      Ĥ = -ℏω₀ σ_z / 2 = -(ℏω₀/2) (|0⟩⟨0| - |1⟩⟨1|)
+    </div>
+    <p>两个能级的能量差为 ℏω₀。</p>
+  </div>
+  
+  <div class="math-box">
+    <h4>周期驱动 / Periodic Drive</h4>
+    <div class="formula">
+      Ĥ_drive = ℏΩ cos(ωt) σ_x / 2
+    </div>
+    <p>以频率 ω 振荡的驱动场（如微波），耦合强度 ℏΩ。</p>
+  </div>
+  
+  <div class="math-box">
+    <h4>Rabi 频率 / Rabi Frequency</h4>
+    <div class="formula">
+      Ω_R = √((ω - ω₀)² + Ω²) = √(Δ² + Ω²)
+    </div>
+    <p>Δ = ω - ω₀ 是失谐（detuning），Ω 是 Rabi 频率（共振时 Ω_R = Ω）。</p>
+    <p>共振时（Δ=0），系统在 |0⟩ 和 |1⟩ <strong>完全翻转</strong>。</p>
+  </div>
+  
+  <div class="analogy-box">
+    <h4>旋转坐标系 / Rotating Frame</h4>
+    <p>改变参考系到以驱动频率 ω 旋转的坐标系。</p>
+    <p>在新坐标系中，有效哈密顿量变为<strong>静磁场</strong>形式：</p>
+    <div class="formula">
+      H_eff = ℏ(Δ σ_z + Ω σ_x) / 2
+    </div>
+    <p>这就是布洛赫球中的旋转操作——量子门的物理图像。</p>
+  </div>
+  
+  <div class="math-box">
+    <h4>脉冲与旋转 / Pulse & Rotation</h4>
+    <div class="formula">
+      U_pulse = exp(-i Ĥ_drive t / ℏ)
+    </div>
+    <p>π/2 脉冲：t = π/(2Ω) → 从 |0⟩ 翻转到 (|0⟩ + |1⟩)/√2</p>
+    <p>π 脉冲：t = π/Ω → 从 |0⟩ 翻转到 |1⟩（非门操作）</p>
+  </div>
+  
+  <div class="concept-card">
+    <h4>在哪里会用到？</h4>
+    <p>• <a href="quantum_lesson09_gates.html#rabi" style="color:#fbbf24;">第9课</a>：单比特门分解</p>
+    <p>• <a href="quantum_lesson05_measurement.html#rabi" style="color:#fbbf24;">第5课</a>：Ramsey 回波</p>
+    <p>• <a href="quantum_lesson12_hardware.html#rabi" style="color:#fbbf24;">第12课</a>：Transmon 门操控</p>
+  </div>
+
+  <!-- ========== Section 6: References ========== -->
+  <h2 id="references">📚 延伸阅读 / Further Reading</h2>
+  
+  <div class="link-box">
+    <h4>教材推荐</h4>
+    <p>• <b>《量子计算与量子信息》</b>(Nielsen & Chuang) — 第2章：量子力学基础，标准教材</p>
+    <p>• <b>《Introduction to Quantum Mechanics》</b>(Griffiths) — 第2章：定态薛定谔方程，第4章：量子力学中的数学</p>
+    <p>• <b>《Quantum Mechanics》</b>(Susskind & Friedman) — 前5章：自旋和量子力学的数学结构</p>
+    <p>• <b>《超导量子计算》</b>(Krantz et al., Applied Physics Reviews) — Transmon 物理综述</p>
+  </div>
+  
+  <div class="link-box">
+    <h4>在线资源</h4>
+    <p>• <a href="https://en.wikipedia.org/wiki/Quantum_harmonic_oscillator" target="_blank">Wikipedia: Quantum Harmonic Oscillator</a></p>
+    <p>• <a href="https://en.wikipedia.org/wiki/Rabi_problem" target="_blank">Wikipedia: Rabi Problem</a></p>
+    <p>• <a href="https://en.wikipedia.org/wiki/Bloch_sphere" target="_blank">Wikipedia: Bloch Sphere</a></p>
+    <p>• <a href="https://ocw.mit.edu/courses/8-04-quantum-physics-i-spring-2016/" target="_blank">MIT OCW 8.04: Quantum Physics I</a></p>
+    <p>• <a href="https://www.feynmanlectures.caltech.edu/III_toc.html" target="_blank">费曼物理学讲义 第III卷 (量子力学)</a></p>
+  </div>
+
+  <div style="text-align:center; margin-top: 30px; padding: 20px;">
+    <button onclick="window.scrollTo({top:0, behavior:'smooth'})" style="background: #6366f1; color: white; border: none; padding: 8px 20px; border-radius: 6px; cursor: pointer;">↑ 回到顶部</button>
+  </div>
+
+</div>
+</body>
+</html>
