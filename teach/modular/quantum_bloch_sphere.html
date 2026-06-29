@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bloch球 · 量子态可视化（含混合态与约化密度矩阵）</title>
+  <link rel="stylesheet" href="/teach/modular/font-size-selector.js">
+  <script src="/teach/modular/pwd-check.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: #0a0e1a; color: #e0e0e0; font-family: 'Segoe UI', 'Microsoft YaHei', system-ui, sans-serif; overflow-x: hidden; }
+    .page-header { background: linear-gradient(135deg, #1a1f35, #1e0a35); padding: 20px 32px; border-bottom: 2px solid #4a2580; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; }
+    .page-header h1 { font-size: 22px; color: #a855f7; }
+    .page-header .subtitle { font-size: 13px; color: #9ca3af; margin-top: 4px; }
+    .main-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; max-width: 1300px; margin: 16px auto; }
+    .panel { background: #0d1525; border: 1px solid #1e293b; border-radius: 8px; padding: 16px; }
+    .panel h3 { color: #c084fc; font-size: 14px; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 1px; }
+    .canvas-container { width: 100%; height: 500px; position: relative; background: radial-gradient(ellipse at center, #111827, #030712); border: 1px solid #1e293b; border-radius: 8px; }
+    #bloch-canvas { width: 100%; height: 100%; cursor: grab; }
+    #bloch-canvas:active { cursor: grabbing; }
+    .info-box { position: absolute; padding: 12px; border-radius: 8px; background: rgba(17, 24, 39, 0.95); border: 1px solid #7c3aed; }
+    .info-box h4 { color: #c084fc; font-size: 13px; margin-bottom: 8px; }
+    .info-box .formula { background: #1a1040; padding: 6px 10px; border-left: 3px solid #a855f7; margin: 4px 0; font-family: 'Courier New', monospace; color: #d8b4fe; font-size: 12px; }
+    .control-panel { top: 16px; right: 16px; min-width: 260px; position: absolute; padding: 14px; border-radius: 8px; background: rgba(17, 24, 39, 0.95); border: 1px solid #7c3aed; }
+    .control-panel h3 { color: #c084fc; margin-bottom: 10px; font-size: 13px; }
+    .control-panel label { display: block; margin-bottom: 5px; font-size: 12px; color: #cbd5e1; }
+    .control-panel input[type=range] { width: 100%; margin: 3px 0 6px; accent-color: #7c3aed; }
+    .control-panel .value-label { color: #a855f7; font-weight: 500; }
+    .control-panel button { width: 100%; padding: 6px; background: #5b21b6; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px; margin-top: 6px; font-family: inherit; }
+    .control-panel button:hover { background: #7c3aed; }
+    .control-panel button.active { background: #7c3aed; border: 2px solid #a78bfa; }
+    .state-info { bottom: 16px; left: 16px; min-width: 280px; }
+    .matrix-display { font-family: 'Courier New', monospace; font-size: 12px; color: #c4b5fd; }
+    .matrix-display table { border-collapse: collapse; margin-top: 6px; }
+    .matrix-display td { padding: 3px 8px; border: 1px solid #374151; text-align: center; min-width: 60px; }
+    .entropy-bar { margin: 8px 0; }
+    .entropy-label { font-size: 11px; color: #9ca3af; margin-bottom: 4px; }
+    .entropy-track { height: 16px; background: #1f2937; border-radius: 4px; overflow: hidden; }
+    .entropy-fill { height: 100%; background: linear-gradient(90deg, #3b82f6, #a855f7, #ef4444); border-radius: 4px; transition: width 0.3s; }
+    .legend { font-size: 11px; color: #9ca3af; margin-top: 8px; padding: 8px; background: rgba(15, 23, 42, 0.5); border-radius: 4px; }
+    .legend span { display: inline-flex; align-items: center; margin-right: 12px; }
+    .legend-color { width: 12px; height: 12px; border-radius: 50%; margin-right: 4px; }
+    .info-wide { grid-column: 1 / -1; }
+    .info-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 12px; }
+    .info-card { background: rgba(15, 23, 42, 0.5); border: 1px solid #1e293b; border-radius: 6px; padding: 12px; }
+    .info-card h4 { color: #fbbf24; font-size: 13px; margin-bottom: 6px; }
+    .info-card p { color: #9ca3af; font-size: 12px; line-height: 1.5; }
+    .toggle-group { display: flex; gap: 6px; flex-wrap: wrap; margin: 6px 0; }
+    .toggle-group button { font-size: 11px; padding: 4px 10px; }
+    .decoherence-controls { border-top: 1px solid #334155; margin-top: 8px; padding-top: 8px; }
+    @media (max-width: 768px) {
+      .main-grid { grid-template-columns: 1fr; }
+      .canvas-container { height: 400px; }
+      .control-panel, .state-info { position: relative; width: auto; top: auto; right: auto; bottom: auto; left: auto; min-width: auto; }
+    }
+  </style>
+</head>
+<body>
+  <div class="font-size-selector-body">
+  <div class="page-header">
+    <div>
+      <h1>Bloch球量子态可视化（混合态与约化密度矩阵）</h1>
+      <div class="subtitle">量子比特 · Bloch表示 · 纯态与混合态 · T₁/T₂退相干</div>
+    </div>
+    <div style="font-size:12px;color:#6b7280;">电子学院 · 量子计算教学</div>
+    <div style="font-size:12px;margin-top:4px;">
+      <b>课前预习：</b><a href="quantum_prerequisites.html#complex" style="color:#818cf8;">复数与欧拉公式</a> · <a href="quantum_prerequisites.html#hermitian" style="color:#818cf8;">厄米算符</a>
+    </div>
+  </div>
+
+  <div class="main-grid">
+    <!-- Left: Bloch Sphere -->
+    <div class="panel">
+      <h3>Bloch 球（3D 交互）</h3>
+      <div class="canvas-container">
+        <canvas id="bloch-canvas"></canvas>
+        <div class="control-panel">
+          <h3>态参数 / State Parameters</h3>
+          <label>极角 θ: <span class="value-label" id="theta-val">0°</span></label>
+          <input type="range" id="theta-slider" min="0" max="314" value="0" step="1">
+          <label>方位角 φ: <span class="value-label" id="phi-val">0°</span></label>
+          <input type="range" id="phi-slider" min="0" max="628" value="314" step="1">
+          <label>纯度 γ (1=纯态): <span class="value-label" id="gamma-val">1.00</span></label>
+          <input type="range" id="gamma-slider" min="0" max="100" value="100" step="1">
+          <div class="toggle-group">
+            <button id="preset-0" class="active">|0⟩</button>
+            <button id="preset-plus">|+⟩</button>
+            <button id="preset-1">|1⟩</button>
+            <button id="preset-i">|i⟩</button>
+          </div>
+          <div class="decoherence-controls">
+            <h3 style="margin-top:0;">退相干模拟 / Decoherence</h3>
+            <label>T₁ (μs): <span class="value-label" id="t1-val">100</span></label>
+            <input type="range" id="t1-slider" min="10" max="500" value="100" step="10">
+            <label>T₂ (μs): <span class="value-label" id="t2-val">100</span></label>
+            <input type="range" id="t2-slider" min="10" max="500" value="100" step="10">
+            <label>时间 (μs): <span class="value-label" id="time-val">0</span></label>
+            <input type="range" id="time-slider" min="0" max="200" value="0" step="1">
+            <button id="animate-decoh">▶ 播放</button>
+            <button id="reset-decoh">重置</button>
+          </div>
+          <button id="toggle-anim">⏸ 暂停自转</button>
+          <button id="reset-cam">🔄 重置视角</button>
+        </div>
+        <div class="info-box state-info">
+          <h4>当前量子态</h4>
+          <div class="formula" id="state-formula">|ψ⟩ = cos(θ/2)|0⟩ + e<sup>iφ</sup>sin(θ/2)|1⟩</div>
+          <div class="formula" id="prob-display">P(|0⟩) = 1.000, P(|1⟩) = 0.000</div>
+          <div class="formula" id="purity-display">纯度 γ = 1.00 (纯态)</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right: Density Matrix + Entropy -->
+    <div class="panel">
+      <h3>密度矩阵 ρ = |ψ⟩⟨ψ|</h3>
+      <div class="matrix-display" id="matrix-display"></div>
+      <div class="entropy-bar">
+        <div class="entropy-label">冯·诺依曼熵 S(ρ) = -Tr(ρ log₂ ρ): <span id="entropy-val">0.000</span> bit</div>
+        <div class="entropy-track"><div class="entropy-fill" id="entropy-fill" style="width:0%"></div></div>
+      </div>
+      <h3 style="margin-top:16px;">布洛赫向量 r = (x, y, z)</h3>
+      <div class="formula" id="bloch-vec">r = (0.000, 0.000, 1.000)</div>
+      <div class="formula" id="bloch-magnitude">|r| = 1.000</div>
+      <div class="legend">
+        <span><span class="legend-color" style="background:#3b82f6"></span>P(|0⟩)</span>
+        <span><span class="legend-color" style="background:#ef4444"></span>P(|1⟩)</span>
+        <span><span class="legend-color" style="background:#a855f7"></span>|r|</span>
+      </div>
+    </div>
+
+    <!-- Bottom: Multi-Qubit Reduced Density Matrix -->
+    <div class="panel info-wide">
+      <h3>多量子比特约化密度矩阵 / Multi-Qubit Reduced State</h3>
+      <p style="color:#9ca3af;font-size:13px;margin-bottom:12px;">
+        输入一个两量子比特纯态，系统自动计算 qubit 0 的约化密度矩阵 ρ₀ = Tr₁(|ψ⟩⟨ψ|) 并在 Bloch 球中显示对应向量。
+      </p>
+      <div class="info-grid">
+        <div class="info-card">
+          <h4>贝尔态 |Φ⁺⟩</h4>
+          <p>(|00⟩+|11⟩)/√2<br>最大纠缠态</p>
+          <button onclick="setBellState('phi_plus')">应用 |Φ⁺⟩</button>
+        </div>
+        <div class="info-card">
+          <h4>贝尔态 |Φ⁻⟩</h4>
+          <p>(|00⟩-|11⟩)/√2<br>最大纠缠态</p>
+          <button onclick="setBellState('phi_minus')">应用 |Φ⁻⟩</button>
+        </div>
+        <div class="info-card">
+          <h4>贝尔态 |Ψ⁺⟩</h4>
+          <p>(|01⟩+|10⟩)/√2<br>最大纠缠态</p>
+          <button onclick="setBellState('psi_plus')">应用 |Ψ⁺⟩</button>
+        </div>
+        <div class="info-card">
+          <h4>贝尔态 |Ψ⁻⟩</h4>
+          <p>(|01⟩-|10⟩)/√2<br>最大纠缠态</p>
+          <button onclick="setBellState('psi_minus')">应用 |Ψ⁻⟩</button>
+        </div>
+        <div class="info-card">
+          <h4>乘积态 |+0⟩</h4>
+          <p>(|0⟩+|1⟩)/√2 ⊗ |0⟩<br>无纠缠</p>
+          <button onclick="setBellState('product')">应用 |+0⟩</button>
+        </div>
+        <div class="info-card">
+          <h4>GHZ 态 (3-qubit)</h4>
+          <p>(|000⟩+|111⟩)/√2<br>多体纠缠</p>
+          <button onclick="setGHZState()">查看 GHZ</button>
+        </div>
+      </div>
+      <div id="multi-qubit-info" style="margin-top:12px;font-size:13px;color:#c4b5fd;font-family:'Courier New',monospace;"></div>
+    </div>
+  </div>
+  </div><!-- end font-size body -->
+
+  <script type="importmap">
+  { "imports": { "three": "/tools/js_libs/three.module.js" } }
+  </script>
+
+  <script type="module">
+    import * as THREE from 'three';
+
+    // ===== State =====
+    let scene, camera, renderer;
+    let theta = 0, phi = Math.PI, gamma = 1.0;
+    let animating = true;
+    let rotationSpeed = 0.002;
+    let rotationAngle = 0;
+    let isDragging = false;
+    let prevMouse = { x: 0, y: 0 };
+    let stateArrow, stateGroup;
+    
+    // Multi-qubit state (2-qubit)
+    let twoQubitState = [
+      { re: 1, im: 0 }, // |00⟩
+      { re: 0, im: 0 }, // |01⟩
+      { re: 0, im: 0 }, // |10⟩
+      { re: 0, im: 0 }  // |11⟩
+    ];
+    let useTwoQubit = false;
+    
+    // Decoherence
+    let T1 = 100, T2 = 100, currentTime = 0;
+    let decohAnimating = false;
+
+    // ===== Complex helpers =====
+    function cadd(a, b) { return { re: a.re + b.re, im: a.im + b.im }; }
+    function csub(a, b) { return { re: a.re - b.re, im: a.im - b.im }; }
+    function cmul(a, b) { return { re: a.re * b.re - a.im * b.im, im: a.re * b.im + a.im * b.re }; }
+    function cscale(a, s) { return { re: a.re * s, im: a.im * s }; }
+    function cconj(a) { return { re: a.re, im: -a.im }; }
+    function cabs2(a) { return a.re * a.re + a.im * a.im; }
+    function cabs(a) { return Math.sqrt(cabs2(a)); }
+
+    // ===== Init =====
+    function init() {
+      const canvas = document.getElementById('bloch-canvas');
+      scene = new THREE.Scene();
+      camera = new THREE.PerspectiveCamera(60, canvas.clientWidth / canvas.clientHeight, 0.01, 100);
+      camera.position.set(3, 2, 4);
+      camera.lookAt(0, 0, 0);
+      renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+      renderer.setSize(canvas.clientWidth, canvas.clientHeight);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      renderer.setClearColor(0x030712);
+      
+      scene.add(new THREE.AmbientLight(0x404060, 0.6));
+      const dl = new THREE.DirectionalLight(0xffffff, 1.2);
+      dl.position.set(4, 4, 4);
+      scene.add(dl);
+      const dl2 = new THREE.DirectionalLight(0x6644ff, 0.6);
+      dl2.position.set(-4, -4, 4);
+      scene.add(dl2);
+      
+      drawBlochSphere();
+      drawAxes();
+      updateState();
+      drawStateVector();
+      setupEvents(canvas);
+      animate();
+    }
+
+    function drawBlochSphere() {
+      const geo = new THREE.SphereGeometry(1, 48, 48);
+      const wireMat = new THREE.MeshBasicMaterial({ color: 0x3b82f6, wireframe: true, transparent: true, opacity: 0.08 });
+      const wireSphere = new THREE.Mesh(geo, wireMat);
+      scene.add(wireSphere);
+      
+      // Semi-transparent sphere
+      const geo2 = new THREE.SphereGeometry(0.99, 32, 32);
+      const mat2 = new THREE.MeshPhongMaterial({ color: 0x1e1b4b, transparent: true, opacity: 0.3 });
+      scene.add(new THREE.Mesh(geo2, mat2));
+    }
+
+    function drawAxes() {
+      const axes = [
+        { dir: [1.5, 0, 0], color: 0xef4444, label: 'x' },
+        { dir: [0, 1.5, 0], color: 0x22c55e, label: 'y' },
+        { dir: [0, 0, 1.5], color: 0xf59e0b, label: 'z' }
+      ];
+      axes.forEach(({ dir, color, label }) => {
+        const geo = new THREE.BufferGeometry();
+        geo.setAttribute('position', new THREE.BufferAttribute(new Float32Array([0,0,0, ...dir]), 3));
+        scene.add(new THREE.Line(geo, new THREE.LineBasicMaterial({ color })));
+        const tipGeo = new THREE.ConeGeometry(0.05, 0.1, 8);
+        const tip = new THREE.Mesh(tipGeo, new THREE.MeshPhongMaterial({ color }));
+        tip.position.set(...dir);
+        if (label === 'z') tip.rotation.x = Math.PI / 2;
+        scene.add(tip);
+      });
+      
+      // Labels
+      const labels = [
+        { text: '|0⟩ (北)', pos: [0, 1.6, 0], color: '#fbbf24' },
+        { text: '|1⟩ (南)', pos: [0, -1.6, 0], color: '#fbbf24' },
+        { text: '|+⟩', pos: [1.6, 0, 0], color: '#94a3b8' },
+        { text: '|+i⟩', pos: [0, 0, 1.6], color: '#94a3b8' }
+      ];
+      labels.forEach(({ text, pos, color }) => {
+        const c = document.createElement('canvas');
+        c.width = 192; c.height = 48;
+        const ctx = c.getContext('2d');
+        ctx.fillStyle = color;
+        ctx.font = 'bold 24px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(text, 96, 34);
+        const tex = new THREE.CanvasTexture(c);
+        const mat = new THREE.SpriteMaterial({ map: tex, transparent: true });
+        const sprite = new THREE.Sprite(mat);
+        sprite.position.set(...pos);
+        sprite.scale.set(1.0, 0.5, 1);
+        scene.add(sprite);
+      });
+    }
+
+    function updateState() {
+      const t = theta / 100;
+      const p = phi / 100;
+      theta = t; phi = p;
+      
+      // Account for decoherence
+      let purity = gamma;
+      if (T1 > 0 && T2 > 0 && currentTime > 0) {
+        const decayT1 = Math.exp(-currentTime / T1);
+        const decayT2 = Math.exp(-currentTime / T2);
+        purity = Math.max(0, Math.min(1, gamma * decayT2));
+        // T₁ causes the z-component to relax toward |0⟩
+        if (decayT1 < 1) {
+          // Simple model: reduce polar angle based on T₁
+          const relaxFactor = (1 - decayT1) * 0.1; // partial relaxation
+          theta = theta * (1 - relaxFactor) + relaxFactor * 0.5;
+        }
+      }
+      
+      const cost2 = Math.cos(theta / 2);
+      const sint2 = Math.sin(theta / 2);
+      const cosp = Math.cos(phi);
+      const sinp = Math.sin(phi);
+      
+      // Bloch vector with purity
+      const bx = purity * sint2 * cosp;
+      const by = purity * sint2 * sinp;
+      const bz = purity * cost2 * 2 - purity; // scale by gamma
+      
+      // Actually for mixed state: r = γ * (sinθ cosφ, sinθ sinφ, cosθ)
+      // This gives |r| = γ for pure states
+      const rx = purity * sint2 * cosp;
+      const ry = purity * sint2 * sinp;
+      const rz = purity * cost2;
+      
+      // Calculate probabilities for P(|0⟩) and P(|1⟩) including mixed state
+      // For mixed state ρ = (I + r·σ)/2, diagonal elements are (1±rz)/2
+      const P0 = (1 + rz) / 2;
+      const P1 = (1 - rz) / 2;
+      
+      // Von Neumann entropy
+      const lambda1 = (1 + purity) / 2;
+      const lambda2 = (1 - purity) / 2;
+      let entropy = 0;
+      if (lambda1 > 1e-10) entropy -= lambda1 * Math.log2(lambda1);
+      if (lambda2 > 1e-10) entropy -= lambda2 * Math.log2(lambda2);
+      
+      // Update displays
+      document.getElementById('prob-display').innerHTML = 
+        `P(|0⟩) = ${P0.toFixed(3)}, P(|1⟩) = ${P1.toFixed(3)}`;
+      document.getElementById('purity-display').innerHTML = 
+        `纯度 γ = ${purity.toFixed(2)} ${purity > 0.99 ? '(纯态)' : purity > 0.01 ? '(混合态)' : '(最大混合)'}`;
+      document.getElementById('bloch-vec').innerHTML = `r = (${rx.toFixed(3)}, ${ry.toFixed(3)}, ${rz.toFixed(3)})`;
+      document.getElementById('bloch-magnitude').innerHTML = `|r| = ${purity.toFixed(3)}`;
+      document.getElementById('entropy-val').textContent = entropy.toFixed(3);
+      document.getElementById('entropy-fill').style.width = (Math.min(1, entropy) * 100) + '%';
+      
+      // Density matrix
+      // ρ = 1/2 [[1+rz, rx-iry], [rx+iry, 1-rz]]
+      const rho00 = (1 + rz) / 2;
+      const rho11 = (1 - rz) / 2;
+      const rho01_re = (rx - (-ry)) / 2; // real part of off-diagonal
+      const rho01_im = (ry + rx * 0) / 2; // simplified (actually (-ryi))
+      
+      // Simplified off-diagonal
+      const offDiagRe = (rx) / 2;
+      const offDiagIm = (-ry) / 2;
+      
+      const matEl = document.getElementById('matrix-display');
+      matEl.innerHTML = `ρ = <table style="border-collapse:collapse;">
+        <tr><td style="padding:3px 8px;border:1px solid #374151;">${rho00.toFixed(3)}</td>
+            <td style="padding:3px 8px;border:1px solid #374151;">${offDiagRe.toFixed(3)} + ${offDiagIm.toFixed(3)}i</td></tr>
+        <tr><td style="padding:3px 8px;border:1px solid #374151;">${offDiagRe.toFixed(3)} + ${(-offDiagIm).toFixed(3)}i</td>
+            <td style="padding:3px 8px;border:1px solid #374151;">${rho11.toFixed(3)}</td></tr>
+      </table>`;
+      
+      return { x: rx, y: ry, z: rz, purity, theta, phi };
+    }
+
+    function drawStateVector() {
+      if (stateGroup) scene.remove(stateGroup);
+      stateGroup = new THREE.Group();
+      
+      const { x, y, z, purity } = updateState();
+      
+      // Main Bloch vector
+      const dir = new THREE.Vector3(x, y, z);
+      const len = dir.length();
+      if (len > 0.001) {
+        dir.normalize();
+        const arrow = new THREE.ArrowHelper(dir, new THREE.Vector3(0,0,0), len, 
+          purity > 0.99 ? 0xa855f7 : (purity > 0.5 ? 0xfbbf24 : 0xef4444), 
+          0.12 * Math.max(0.5, len), 0.06 * Math.max(0.5, len));
+        stateGroup.add(arrow);
+        
+        // Tip sphere
+        const tipGeo = new THREE.SphereGeometry(0.06 * Math.max(0.5, len), 16, 16);
+        const tipMat = new THREE.MeshPhongMaterial({ 
+          color: purity > 0.99 ? 0xa855f7 : (purity > 0.5 ? 0xfbbf24 : 0xef4444), 
+          emissive: 0x220044 
+        });
+        const tipMesh = new THREE.Mesh(tipGeo, tipMat);
+        tipMesh.position.set(x, y, z);
+        stateGroup.add(tipMesh);
+      }
+      
+      // For mixed state, show a small cloud representing uncertainty
+      if (purity < 0.99 && purity > 0.01) {
+        const cloudGeo = new THREE.SphereGeometry((1 - purity) * 0.3, 16, 16);
+        const cloudMat = new THREE.MeshBasicMaterial({ color: 0xa855f7, transparent: true, opacity: 0.15 });
+        const cloud = new THREE.Mesh(cloudGeo, cloudMat);
+        cloud.position.set(x, y, z);
+        stateGroup.add(cloud);
+      }
+      
+      scene.add(stateGroup);
+    }
+
+    function setupEvents(canvas) {
+      canvas.addEventListener('mousedown', (e) => { isDragging = true; prevMouse = { x: e.clientX, y: e.clientY }; });
+      canvas.addEventListener('mousemove', (e) => {
+        if (!isDragging) return;
+        scene.rotation.y += (e.clientX - prevMouse.x) * 0.01;
+        scene.rotation.x += (e.clientY - prevMouse.y) * 0.01;
+        prevMouse = { x: e.clientX, y: e.clientY };
+      });
+      canvas.addEventListener('mouseup', () => { isDragging = false; });
+      canvas.addEventListener('mouseleave', () => { isDragging = false; });
+      canvas.addEventListener('wheel', (e) => {
+        e.preventDefault();
+        camera.position.multiplyScalar(e.deltaY > 0 ? 1.1 : 0.9);
+      });
+      
+      document.getElementById('theta-slider').addEventListener('input', (e) => {
+        theta = parseInt(e.target.value);
+        document.getElementById('theta-val').textContent = (theta * 180 / Math.PI).toFixed(0) + '°';
+        drawStateVector();
+      });
+      document.getElementById('phi-slider').addEventListener('input', (e) => {
+        phi = parseInt(e.target.value);
+        document.getElementById('phi-val').textContent = (phi * 180 / Math.PI).toFixed(0) + '°';
+        drawStateVector();
+      });
+      document.getElementById('gamma-slider').addEventListener('input', (e) => {
+        gamma = parseInt(e.target.value) / 100;
+        document.getElementById('gamma-val').textContent = gamma.toFixed(2);
+        drawStateVector();
+      });
+      
+      // T1/T2 sliders
+      document.getElementById('t1-slider').addEventListener('input', (e) => {
+        T1 = parseInt(e.target.value);
+        document.getElementById('t1-val').textContent = T1;
+      });
+      document.getElementById('t2-slider').addEventListener('input', (e) => {
+        T2 = parseInt(e.target.value);
+        document.getElementById('t2-val').textContent = T2;
+      });
+      document.getElementById('time-slider').addEventListener('input', (e) => {
+        currentTime = parseInt(e.target.value);
+        document.getElementById('time-val').textContent = currentTime;
+        drawStateVector();
+      });
+      
+      // Presets
+      document.getElementById('preset-0').onclick = function() { setPreset(0, 0, 1); this.classList.add('active'); };
+      document.getElementById('preset-plus').onclick = function() { setPreset(Math.PI/2, 0, 1); this.classList.add('active'); };
+      document.getElementById('preset-1').onclick = function() { setPreset(Math.PI, 0, 1); this.classList.add('active'); };
+      document.getElementById('preset-i').onclick = function() { setPreset(Math.PI/2, Math.PI/2, 1); this.classList.add('active'); };
+      
+      document.getElementById('reset-cam').onclick = () => { scene.rotation.set(0,0,0); camera.position.set(3,2,4); };
+      document.getElementById('toggle-anim').onclick = function() {
+        animating = !animating;
+        this.textContent = animating ? '⏸ 暂停自转' : '▶ 播放自转';
+      };
+      
+      // Decoherence animation
+      document.getElementById('animate-decoh').onclick = function() {
+        decohAnimating = !decohAnimating;
+        this.textContent = decohAnimating ? '⏸ 暂停' : '▶ 播放';
+        if (decohAnimating) animateDecoherence();
+      };
+      document.getElementById('reset-decoh').onclick = () => {
+        currentTime = 0;
+        decohAnimating = false;
+        document.getElementById('time-slider').value = 0;
+        document.getElementById('time-val').textContent = 0;
+        document.getElementById('animate-decoh').textContent = '▶ 播放';
+        drawStateVector();
+      };
+    }
+
+    function setPreset(t, p, g) {
+      theta = t * 100;
+      phi = p * 100;
+      gamma = g;
+      document.getElementById('theta-slider').value = Math.round(t * 100);
+      document.getElementById('phi-slider').value = Math.round(p * 100);
+      document.getElementById('gamma-slider').value = Math.round(g * 100);
+      document.getElementById('theta-val').textContent = (t * 180 / Math.PI).toFixed(0) + '°';
+      document.getElementById('phi-val').textContent = (p * 180 / Math.PI).toFixed(0) + '°';
+      document.getElementById('gamma-val').textContent = g.toFixed(2);
+      drawStateVector();
+    }
+
+    function animateDecoherence() {
+      if (!decohAnimating) return;
+      currentTime += 2;
+      if (currentTime > 500) { decohAnimating = false; currentTime = 500; }
+      document.getElementById('time-slider').value = currentTime;
+      document.getElementById('time-val').textContent = currentTime;
+      drawStateVector();
+      if (decohAnimating) requestAnimationFrame(animateDecoherence);
+    }
+
+    // ===== Multi-qubit functions =====
+    window.setBellState = function(type) {
+      useTwoQubit = true;
+      twoQubitState = [
+        { re: 0, im: 0 }, { re: 0, im: 0 }, { re: 0, im: 0 }, { re: 0, im: 0 }
+      ];
+      switch(type) {
+        case 'phi_plus': twoQubitState[0] = { re: 1/Math.SQRT2, im: 0 }; twoQubitState[3] = { re: 1/Math.SQRT2, im: 0 }; break;
+        case 'phi_minus': twoQubitState[0] = { re: 1/Math.SQRT2, im: 0 }; twoQubitState[3] = { re: -1/Math.SQRT2, im: 0 }; break;
+        case 'psi_plus': twoQubitState[1] = { re: 1/Math.SQRT2, im: 0 }; twoQubitState[2] = { re: 1/Math.SQRT2, im: 0 }; break;
+        case 'psi_minus': twoQubitState[1] = { re: 1/Math.SQRT2, im: 0 }; twoQubitState[2] = { re: -1/Math.SQRT2, im: 0 }; break;
+        case 'product': twoQubitState[0] = { re: 1/Math.SQRT2, im: 0 }; twoQubitState[2] = { re: 1/Math.SQRT2, im: 0 }; break;
+      }
+      computeReducedDensity();
+    };
+
+    window.setGHZState = function() {
+      document.getElementById('multi-qubit-info').innerHTML = 
+        `<b>GHZ 态 (|000⟩+|111⟩)/√2</b><br>` +
+        `约化密度矩阵（任取一个 qubit）：ρ = (|0⟩⟨0| + |1⟩⟨1|)/2 = I/2<br>` +
+        `这是最大混合态，|r| = 0，位于 Bloch 球中心。<br>` +
+        `冯·诺依曼熵 S = 1 bit（最大值）`;
+      // Set Bloch vector to center (max mixed)
+      theta = Math.PI / 2;
+      phi = 0;
+      gamma = 0.001;
+      document.getElementById('theta-slider').value = Math.round(Math.PI/2 * 100);
+      document.getElementById('gamma-slider').value = 0;
+      document.getElementById('theta-val').textContent = '90°';
+      document.getElementById('gamma-val').textContent = '0.00';
+      drawStateVector();
+    };
+
+    function computeReducedDensity() {
+      // ρ₀ = Tr₁(|ψ⟩⟨ψ|) for 2-qubit state
+      // ρ₀[i,j] = Σ_k ψ[i,k] * conj(ψ[j,k])
+      const psi = twoQubitState;
+      // ρ₀[0,0] = |ψ[00]|² + |ψ[01]|²
+      const rho00 = cabs2(psi[0]) + cabs2(psi[1]);
+      const rho11 = cabs2(psi[2]) + cabs2(psi[3]);
+      const rho01 = cadd(cmul(psi[0], cconj(psi[2])), cmul(psi[1], cconj(psi[3])));
+      
+      // Bloch vector from ρ: r_x = 2*Re(ρ01), r_y = 2*Im(ρ01), r_z = ρ00 - ρ11
+      const rx = 2 * rho01.re;
+      const ry = 2 * rho01.im;
+      const rz = rho00 - rho11;
+      const rmag = Math.sqrt(rx*rx + ry*ry + rz*rz);
+      
+      // Update Bloch sphere
+      if (rmag > 0.001) {
+        theta = Math.acos(rz / rmag);
+        phi = Math.atan2(ry, rx);
+        gamma = rmag;
+      } else {
+        theta = Math.PI / 2;
+        phi = 0;
+        gamma = 0;
+      }
+      
+      document.getElementById('theta-slider').value = Math.round(theta * 100);
+      document.getElementById('phi-slider').value = Math.round(((phi % (2*Math.PI)) * 100 + 200*Math.PI) % (200*Math.PI));
+      document.getElementById('gamma-slider').value = Math.round(gamma * 100);
+      document.getElementById('theta-val').textContent = (theta * 180 / Math.PI).toFixed(0) + '°';
+      document.getElementById('phi-val').textContent = (phi * 180 / Math.PI).toFixed(0) + '°';
+      document.getElementById('gamma-val').textContent = gamma.toFixed(2);
+      
+      // Display info
+      const purity = rmag;
+      const entropy = purity > 0.99 ? 0 : (-(1+purity)/2 * Math.log2((1+purity)/2) - (1-purity)/2 * Math.log2((1-purity)/2));
+      document.getElementById('multi-qubit-info').innerHTML = 
+        `约化密度矩阵 ρ₀ = [[${rho00.toFixed(3)}, ${rho01.re.toFixed(3)}${rho01.im >= 0 ? '+' : ''}${rho01.im.toFixed(3)}i], [${rho01.re.toFixed(3)}${(-rho01.im) >= 0 ? '+' : ''}${(-rho01.im).toFixed(3)}i, ${rho11.toFixed(3)}]]<br>` +
+        `布洛赫向量 r = (${rx.toFixed(3)}, ${ry.toFixed(3)}, ${rz.toFixed(3)}), |r| = ${purity.toFixed(3)}<br>` +
+        `纠缠熵 S = ${entropy.toFixed(3)} bit ${purity < 0.01 ? '(最大纠缠)' : purity > 0.99 ? '(无纠缠)' : '(部分纠缠)'}`;
+      
+      drawStateVector();
+    }
+
+    function animate() {
+      requestAnimationFrame(animate);
+      if (animating) {
+        rotationAngle += rotationSpeed;
+        scene.rotation.y = rotationAngle;
+      }
+      renderer.render(scene, camera);
+    }
+
+    window.addEventListener('resize', () => {
+      const canvas = document.getElementById('bloch-canvas');
+      camera.aspect = canvas.clientWidth / canvas.clientHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(canvas.clientWidth, canvas.clientHeight);
+    });
+
+    window.addEventListener('DOMContentLoaded', () => { init(); drawStateVector(); });
+  </script>
+</body>
+</html>

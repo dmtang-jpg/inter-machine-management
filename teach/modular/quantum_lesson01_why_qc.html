@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>第1课：为什么需要量子计算机？— 量子计算入门</title>
+  <link rel="stylesheet" href="/teach/modular/font-size-selector.js">
+  <script src="/teach/modular/pwd-check.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: #0a0e1a;
+      color: #e0e0e0;
+      font-family: 'Segoe UI', 'Microsoft YaHei', system-ui, sans-serif;
+      min-height: 100vh;
+      padding: 20px;
+      line-height: 1.6;
+    }
+    .slide-container {
+      max-width: 1100px;
+      margin: 0 auto;
+      background: linear-gradient(135deg, #0f172a 0%, #1a1a2e 100%);
+      border-radius: 12px;
+      border: 1px solid #334155;
+      overflow: hidden;
+    }
+    .slide {
+      display: none;
+      padding: 40px 48px;
+      min-height: 560px;
+      animation: fadeIn 0.3s ease-in;
+    }
+    .slide.active { display: block; }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .controls {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 14px 48px;
+      background: #1a1a2e;
+      border-top: 1px solid #334155;
+    }
+    .controls button {
+      background: #6366f1;
+      color: white;
+      border: none;
+      padding: 8px 20px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      font-family: inherit;
+    }
+    .controls button:hover { background: #4f46e5; }
+    .controls button:disabled { background: #4b5563; cursor: not-allowed; }
+    .controls .slide-num { color: #94a3b8; font-size: 14px; }
+
+    /* Slide Content */
+    h1 { color: #60a5fa; font-size: 28px; margin-bottom: 12px; text-align: center; }
+    h2 { color: #818cf8; font-size: 22px; margin-bottom: 16px; border-bottom: 2px solid #4338ca; padding-bottom: 6px; }
+    h3 { color: #a78bfa; font-size: 18px; margin: 16px 0 8px 0; }
+    p { margin-bottom: 10px; color: #cbd5e1; font-size: 15px; }
+    .subtitle { text-align: center; color: #94a3b8; font-size: 14px; margin-bottom: 8px; }
+    .tag { display: inline-block; background: #1e293b; padding: 4px 12px; border-radius: 16px; font-size: 12px; color: #a78bfa; margin-right: 6px; border: 1px solid #6366f1; }
+
+    /* Concept cards */
+    .concept-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin: 14px 0; }
+    .concept-card {
+      background: linear-gradient(135deg, #1e293b, #0f172a);
+      border: 1px solid #6366f1;
+      border-radius: 8px;
+      padding: 14px 18px;
+    }
+    .concept-card h4 { color: #fbbf24; font-size: 15px; margin-bottom: 6px; }
+    .concept-card p { font-size: 13px; color: #94a3b8; margin-bottom: 4px; }
+    .highlight { color: #fbbf24; font-weight: bold; }
+
+    /* Analogy box */
+    .analogy-box {
+      background: linear-gradient(135deg, rgba(99,102,241,0.1), rgba(167,139,250,0.05));
+      border-left: 4px solid #6366f1;
+      border-radius: 0 8px 8px 0;
+      padding: 16px 20px;
+      margin: 12px 0;
+    }
+    .analogy-box h4 { color: #a78bfa; margin-bottom: 8px; }
+    .analogy-box p { font-size: 14px; }
+
+    /* Math box */
+    .math-box {
+      background: linear-gradient(135deg, rgba(99,102,241,0.08), rgba(99,102,241,0.02));
+      border: 1px solid #6366f1;
+      border-radius: 8px;
+      padding: 16px 20px;
+      margin: 12px 0;
+    }
+    .math-box h4 { color: #a78bfa; margin-bottom: 8px; font-size: 15px; }
+    .math-box p { font-size: 14px; color: #cbd5e1; }
+    .formula { 
+      background: rgba(15,23,42,0.8); 
+      border-radius: 6px; 
+      padding: 10px 14px; 
+      margin: 8px 0; 
+      text-align: center;
+      font-size: 16px;
+    }
+
+    /* Comparison table */
+    table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 14px; }
+    th { background: #1e293b; color: #fbbf24; padding: 10px 14px; text-align: left; border: 1px solid #334155; }
+    td { background: rgba(15,23,42,0.6); color: #cbd5e1; padding: 10px 14px; border: 1px solid #334155; }
+    tr:hover td { background: rgba(99,102,241,0.1); }
+
+    /* Quiz area */
+    .quiz-box {
+      background: rgba(34,197,94,0.05);
+      border: 1px solid #22c55e;
+      border-radius: 8px;
+      padding: 16px 20px;
+      margin: 14px 0;
+    }
+    .quiz-box h4 { color: #4ade80; margin-bottom: 8px; }
+    .quiz-box label { display: block; margin: 6px 0; cursor: pointer; }
+    .quiz-box input { margin-right: 8px; }
+    .quiz-box button {
+      background: #16a34a; color: white; border: none; padding: 6px 16px;
+      border-radius: 6px; cursor: pointer; margin-top: 6px;
+    }
+    .quiz-result { margin-top: 10px; padding: 8px 12px; border-radius: 4px; display: none; }
+    .quiz-result.correct { background: rgba(34,197,94,0.15); color: #4ade80; border: 1px solid #22c55e; }
+    .quiz-result.wrong { background: rgba(239,68,68,0.15); color: #f87171; border: 1px solid #ef4444; }
+
+    /* Bloch canvas */
+    #blochCanvas { background: #0a0e1a; border: 1px solid #334155; border-radius: 8px; display: block; margin: 12px auto; }
+
+    /* State vector viz */
+    .state-viz { display: flex; justify-content: center; align-items: center; gap: 20px; margin: 16px 0; flex-wrap: wrap; }
+    .state-box {
+      background: rgba(15,23,42,0.6);
+      border: 1px solid #334155;
+      border-radius: 8px;
+      padding: 12px 16px;
+      text-align: center;
+      min-width: 120px;
+    }
+    .state-box .label { color: #94a3b8; font-size: 12px; margin-bottom: 4px; }
+    .state-box .value { color: #fbbf24; font-size: 16px; font-family: 'Courier New', monospace; }
+    .state-arrow { font-size: 24px; color: #6366f1; }
+
+    /* Hilbert space viz */
+    .hilbert-viz { margin: 16px 0; }
+    .hilbert-basis { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin: 12px 0; }
+    .basis-state {
+      background: linear-gradient(135deg, #1e293b, #0f172a);
+      border: 1px solid #6366f1;
+      border-radius: 6px;
+      padding: 6px 12px;
+      font-family: 'Courier New', monospace;
+      font-size: 13px;
+      color: #a78bfa;
+    }
+
+    pre {
+      background: #0a0e1a; border: 1px solid #334155; border-radius: 8px;
+      padding: 14px 18px; margin: 10px 0; overflow-x: auto; font-size: 13px; color: #fbbf24;
+    }
+
+    .bubble-box { display: flex; justify-content: center; align-items: center; gap: 16px; margin: 16px 0; }
+    .bubble {
+      width: 50px; height: 50px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12px; font-weight: bold; color: white;
+      animation: pulse 2s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.15); opacity: 0.8; }
+    }
+    .bubble-0 { background: linear-gradient(135deg, #3b82f6, #1d4ed8); }
+    .bubble-1 { background: linear-gradient(135deg, #8b5cf6, #6d28d9); }
+    .bubble-plus { font-size: 24px; color: #fbbf24; }
+    .brain-icon { font-size: 28px; margin-bottom: 6px; }
+
+    .lang-switch {
+      position: fixed;
+      top: 10px;
+      right: 10px;
+      background: #1e293b;
+      border: 1px solid #6366f1;
+      border-radius: 6px;
+      padding: 4px 8px;
+      font-size: 12px;
+      color: #a78bfa;
+      cursor: pointer;
+      z-index: 100;
+    }
+  </style>
+</head>
+<body>
+  <div class="slide-container">
+    <!-- Slide 1: Title -->
+    <div class="slide active">
+      <div class="subtitle">量子计算入门 · 第1课 / Quantum Computing Lesson 1</div>
+      <h1>为什么需要量子计算机？<br><span style="font-size:18px;color:#94a3b8;">Why Do We Need Quantum Computers?</span></h1>
+      <div class="concept-grid" style="grid-template-columns: 1fr;">
+        <div class="concept-card">
+          <h4>学习目标 / Learning Objectives</h4>
+          <p>1. 理解量子计算的本质优势 / Understand the fundamental advantage of quantum computing</p>
+          <p>2. 辨析常见误区分 / Distinguish common misconceptions</p>
+          <p>3. 了解当前技术挑战与发展方向 / Understand current challenges and development directions</p>
+          <p>4. 掌握量子比特的数学表示（狄拉克符号）/ Master mathematical representation of qubits (Dirac notation)</p>
+    <p style="color:#94a3b8;font-size:12px;margin-top:8px;">
+      <b>课前预习：</b><a href="quantum_prerequisites.html#complex" style="color:#818cf8;">复数与欧拉公式</a> · <a href="quantum_prerequisites.html#hermitian" style="color:#818cf8;">厄米算符</a>
+    </p>
+        </div>
+      </div>
+      <p align="center" style="margin-top:20px;color:#a78bfa;">
+        <b>教学方式</b>：讲授 · 互动 · 可视化演示 / <b>课时</b>：45分钟
+      </p>
+    </div>
+
+    <!-- Slide 2: Dirac Notation & Vector Representation -->
+    <div class="slide">
+      <h2>量子比特的数学表示 / Mathematical Representation of Qubits</h2>
+      <p>在量子力学中，量子比特的状态用<strong>狄拉克符号</strong>（Dirac notation）表示：</p>
+      <div class="math-box">
+        <h4>基态表示 / Basis States</h4>
+        <div class="formula">
+          |0⟩ = $\begin{pmatrix} 1 \\ 0 \end{pmatrix}$,　
+          |1⟩ = $\begin{pmatrix} 0 \\ 1 \end{pmatrix}$
+        </div>
+        <p>|0⟩ 和 |1⟩ 是二维复向量空间 ℂ² 的一组正交归一基。</p>
+      </div>
+      <div class="math-box">
+        <h4>一般量子态 / General Quantum State</h4>
+        <div class="formula">
+          |ψ⟩ = α|0⟩ + β|1⟩ = $\begin{pmatrix} \alpha \\ \beta \end{pmatrix}$,　 |α|² + |β|² = 1
+        </div>
+        <p>α, β ∈ ℂ 是复数概率幅（probability amplitudes）。测量时得到 |0⟩ 的概率为 |α|²，得到 |1⟩ 的概率为 |β|²。</p>
+      </div>
+      <div class="state-viz">
+        <div class="state-box">
+          <div class="label">经典比特 Classical bit</div>
+          <div class="value">0 或 or 1</div>
+        </div>
+        <div class="state-arrow">→</div>
+        <div class="state-box">
+          <div class="label">量子比特 Qubit</div>
+          <div class="value">α|0⟩+β|1⟩</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 3: Bloch Sphere -->
+    <div class="slide">
+      <h2>布洛赫球 / The Bloch Sphere</h2>
+      <p>单量子比特的纯态可以用布洛赫球面上的一个点参数化：</p>
+      <div class="math-box">
+        <h4>布洛赫球参数化 / Bloch Sphere Parameterization</h4>
+        <div class="formula">
+          |ψ⟩ = cos(θ/2)|0⟩ + e<sup>iφ</sup> sin(θ/2)|1⟩,　 0 ≤ θ ≤ π, 0 ≤ φ < 2π
+        </div>
+        <p>θ 是极角（与z轴夹角），φ 是方位角（在xy平面内与x轴夹角）</p>
+      </div>
+      <div style="display:flex;justify-content:center;">
+        <canvas id="blochCanvas" width="400" height="360"></canvas>
+      </div>
+      <div class="state-viz">
+        <div class="state-box">
+          <div class="label">北极 North pole</div>
+          <div class="value">|0⟩ (θ=0)</div>
+        </div>
+        <div class="state-box">
+          <div class="label">南极 South pole</div>
+          <div class="value">|1⟩ (θ=π)</div>
+        </div>
+        <div class="state-box">
+          <div class="label">赤道上 Equator</div>
+          <div class="value">(|0⟩±|1⟩)/√2</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 4: Tensor Product & Multi-qubit States -->
+    <div class="slide">
+      <h2>张量积与多量子比特 / Tensor Product & Multi-qubit States</h2>
+      <p>多个量子比特的复合系统用<strong>张量积</strong>（⊗）构造：</p>
+      <div class="math-box">
+        <h4>张量积定义 / Tensor Product Definition</h4>
+        <div class="formula">
+          |a⟩ ⊗ |b⟩ = |ab⟩ (简写 / shorthand)
+        </div>
+        <p>若 |ψ⟩ = α|0⟩ + β|1⟩，|φ⟩ = γ|0⟩ + δ|1⟩，则：</p>
+        <div class="formula">
+          |ψ⟩ ⊗ |φ⟩ = αγ|00⟩ + αδ|01⟩ + βγ|10⟩ + βδ|11⟩
+        </div>
+      </div>
+      <div class="math-box">
+        <h4>n 量子比特的 Hilbert 空间 / n-qubit Hilbert Space</h4>
+        <div class="formula">
+          (ℂ²)<sup>⊗n</sup> ≅ ℂ<sup>2ⁿ</sup>
+        </div>
+        <p>n 个量子比特的状态空间维度为 2ⁿ。3 个量子比特的基态：</p>
+      </div>
+      <div class="hilbert-basis">
+        <span class="basis-state">|000⟩</span>
+        <span class="basis-state">|001⟩</span>
+        <span class="basis-state">|010⟩</span>
+        <span class="basis-state">|011⟩</span>
+        <span class="basis-state">|100⟩</span>
+        <span class="basis-state">|101⟩</span>
+        <span class="basis-state">|110⟩</span>
+        <span class="basis-state">|111⟩</span>
+      </div>
+      <p style="color:#fbbf24;margin-top:12px;text-align:center;">
+        关键洞察：n 个量子比特可以同时处于 2ⁿ 个基态的叠加！
+      </p>
+    </div>
+
+    <!-- Slide 5: Common Misconceptions -->
+    <div class="slide">
+      <h2>常见误解 / Common Misconceptions</h2>
+      <div class="concept-grid">
+        <div class="concept-card">
+          <h4>误解 1："快一万倍"</h4>
+          <p>量子加速只在<b>特定问题</b>上有效</p>
+          <p>对排序、网页浏览等无加速</p>
+        </div>
+        <div class="concept-card">
+          <h4>误解 2："会破解所有密码"</h4>
+          <p>理论上可破解RSA/ECC</p>
+          <p>但需要数百万量子比特，当前只有约1000</p>
+        </div>
+        <div class="concept-card">
+          <h4>误解 3："取代经典计算机"</h4>
+          <p>量子计算机是<b>协处理器</b></p>
+          <p>类似GPU，非独立电脑</p>
+        </div>
+        <div class="concept-card">
+          <h4>误解 4："量子并行=同时算所有答案"</h4>
+          <p>叠加态包含所有可能，但测量只给出一个结果</p>
+          <p>需要精心设计的量子算法让正确答案概率增强</p>
+        </div>
+      </div>
+      <div class="quiz-box">
+        <h4>快速判断题：</h4>
+        <label><input type="radio" name="q1" value="wrong"> A. 量子计算机在所有问题上都比经典计算机快</label>
+        <label><input type="radio" name="q1" value="correct"> B. 量子计算机只在特定问题上展现指数级加速</label>
+        <label><input type="radio" name="q1" value="wrong"> C. 量子计算机的速度取决于时钟频率</label>
+        <button onclick="checkQuiz1()">检查答案</button>
+        <div id="quiz-result" class="quiz-result"></div>
+      </div>
+    </div>
+
+    <!-- Slide 6: Wave Function & Superposition -->
+    <div class="slide">
+      <h2>波函数与叠加态 / Wave Function & Superposition</h2>
+      <p>量子比特的本质是<strong>概率幅的叠加</strong>：</p>
+      <div class="math-box">
+        <h4>概率诠释 / Born Rule</h4>
+        <div class="formula">
+          P(|0⟩) = |α|² = |⟨0|ψ⟩|²,　 P(|1⟩) = |β|² = |⟨1|ψ⟩|²
+        </div>
+        <p>⟨0|ψ⟩ 是内积（inner product），表示 |ψ⟩ 在 |0⟩ 方向上的投影。</p>
+      </div>
+      <div style="text-align:center; margin:16px 0;">
+        <div class="bubble-box">
+          <div class="bubble bubble-0">|0⟩</div>
+          <div class="bubble bubble-plus">+</div>
+          <div class="bubble bubble-1">|1⟩</div>
+        </div>
+        <p style="color:#94a3b8; font-size:13px; margin-top:8px;">
+          量子比特：同时是 |0⟩ 和 |1⟩（概率幅叠加）/ Simultaneously |0⟩ and |1⟩
+        </p>
+      </div>
+      <div class="analogy-box">
+        <h4>与经典概率的区别 / Difference from Classical Probability</h4>
+        <p><b>经典混合态</b>：50% 概率是0，50% 概率是1（但实际处于其中一个）</p>
+        <p><b>量子叠加态</b>：100% 同时是0和1（概率幅可以干涉！）</p>
+      </div>
+    </div>
+
+    <!-- Slide 7: Why Exponential Speedup -->
+    <div class="slide">
+      <h2>为什么指数加速？/ Why Exponential Speedup?</h2>
+      <div class="math-box">
+        <h4>状态空间维度 / State Space Dimension</h4>
+        <div class="formula">
+          n 个量子比特：dim = 2ⁿ
+        </div>
+        <p>每增加一个量子比特，状态空间维度<strong>翻倍</strong>！</p>
+      </div>
+      <table>
+        <tr><th>n 量子比特</th><th>经典状态数</th><th>量子状态数 (2ⁿ)</th><th>加速比</th></tr>
+        <tr><td>1</td><td>1</td><td>2</td><td>2x</td></tr>
+        <tr><td>10</td><td>1</td><td>1,024</td><td>~1000x</td></tr>
+        <tr><td>20</td><td>1</td><td>~100万</td><td>~100万x</td></tr>
+        <tr><td>30</td><td>1</td><td>~10亿</td><td>~10亿x</td></tr>
+        <tr><td>50</td><td>1</td><td>~10¹⁵</td><td>超过超级计算机内存</td></tr>
+        <tr><td>300</td><td>1</td><td>10⁹⁰</td><td>超过宇宙原子总数</td></tr>
+      </table>
+      <p style="margin-top:10px; color:#94a3b8; font-size:13px;">
+        ⚠️ 但测量时只能得到 n 个比特的一个结果。量子算法的精髓在于：通过干涉让正确答案的概率幅增强。
+      </p>
+    </div>
+
+    <!-- Slide 8: Quantum Advantage -->
+    <div class="slide">
+      <h2>量子优势：哪些问题？/ Quantum Advantage: Which Problems?</h2>
+      <table>
+        <tr><th>问题</th><th>算法</th><th>经典复杂度</th><th>量子复杂度</th></tr>
+        <tr><td>无序搜索</td><td>Grover</td><td>O(N)</td><td>O(√N)</td></tr>
+        <tr><td>大数因式分解</td><td>Shor</td><td>指数时间</td><td>多项式时间</td></tr>
+        <tr><td>量子系统模拟</td><td>量子模拟</td><td>极难</td><td>自然可以</td></tr>
+        <tr><td>最优化</td><td>QAOA</td><td>NP-hard</td><td>可能有优势</td></tr>
+        <tr><td>线性方程组</td><td>HHL</td><td>O(N³)</td><td>O(log N)</td></tr>
+      </table>
+      <div class="analogy-box" style="margin-top:14px;">
+        <h4>40位密码搜索的差距</h4>
+        <p>经典方法需要尝试 <span class="highlight">~1万亿</span>次</p>
+        <p>Grover算法只需 <span class="highlight">~100万</span>次（√N加速）</p>
+      </div>
+    </div>
+
+    <!-- Slide 9: Architecture -->
+    <div class="slide">
+      <h2>量子计算机 ≠ 独立电脑 / Quantum Computer ≠ Standalone</h2>
+      <div class="analogy-box">
+        <h4>GPU模式：量子处理器是"量子GPU"</h4>
+        <p>经典计算机发指令 → 量子处理器执行量子运算 → 结果传给经典计算机处理</p>
+      </div>
+      <div class="concept-grid">
+        <div class="concept-card">
+          <h4>硬件核心</h4>
+          <p>• Transmon电路（约瑟夫森结）</p>
+          <p>• 稀释制冷机（~0.01K）</p>
+          <p>• 微波信号链路</p>
+        </div>
+        <div class="concept-card">
+          <h4>当前进展 (2024-2025)</h4>
+          <p>• ~1000+ 物理量子比特</p>
+          <p>• 纠错后才能做实用计算</p>
+          <p>• 目标：百万级物理比特</p>
+        </div>
+        <div class="concept-card">
+          <h4>主要玩家</h4>
+          <p>• IBM Quantum (1121 qubits)</p>
+          <p>• Google Sycamore</p>
+          <p>• Quantinuum (离子阱)</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 10: Post-Quantum -->
+    <div class="slide">
+      <h2>密码学威胁与应对 / Cryptography Threat & Response</h2>
+      <div class="analogy-box">
+        <h4>安全威胁</h4>
+        <p>Shor算法可破解RSA和ECC加密（基于大数分解/离散对数）</p>
+        <p>银行交易、数字货币、机密通信都将暴露</p>
+      </div>
+      <div class="analogy-box" style="background: rgba(34,197,94,0.05); border-color: #22c55e;">
+        <h4 style="color:#4ade80;">应对策略：后量子密码学 (PQC)</h4>
+        <p>开发抵抗量子攻击的新加密算法（基于格/编码/多变量）</p>
+        <p>NIST已于2024年发布首个后量子密码标准 (CRYSTALS-Kyber/Dilithium)</p>
+      </div>
+    </div>
+
+    <!-- Slide 11: Summary -->
+    <div class="slide">
+      <h2>课堂总结 / Summary</h2>
+      <div class="concept-grid">
+        <div class="concept-card">
+          <h4>1. 量子比特数学 / Qubit Math</h4>
+          <p>• |ψ⟩ = α|0⟩ + β|1⟩</p>
+          <p>• 布洛赫球参数化</p>
+          <p>• 张量积构造多比特态</p>
+        </div>
+        <div class="concept-card">
+          <h4>2. 量子优势 / Quantum Advantage</h4>
+          <p>• 2ⁿ 维Hilbert空间</p>
+          <p>• Grover: O(N) → O(√N)</p>
+          <p>• Shor: 指数 → 多项式</p>
+        </div>
+        <div class="concept-card">
+          <h4>3. 技术挑战 / Challenges</h4>
+          <p>• 退相干（需要极低温）</p>
+          <p>• 量子纠错</p>
+          <p>• 比特数量不足</p>
+        </div>
+        <div class="concept-card">
+          <h4>4. 常见误解 / Misconceptions</h4>
+          <p>• 不是"在所有问题上都快"</p>
+          <p>• 不会取代经典计算机</p>
+          <p>• 是协处理器，不是独立电脑</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 12: Homework -->
+    <div class="slide" style="text-align:center;">
+      <h2>课后作业 / Homework</h2>
+      <div class="quiz-box" style="text-align:left;">
+        <h4>必做作业</h4>
+        <p>1. 证明：若 |ψ⟩ = cos(θ/2)|0⟩ + e^(iφ)sin(θ/2)|1⟩，则 |α|² + |β|² = 1 自动满足。</p>
+        <p>2. 计算 3 量子比特系统 Hilbert 空间的维度。若用经典计算机存储所有概率幅（双精度复数），需要多少内存？</p>
+        <p>3. 阅读 Qiskit Textbook 第1章：<a href="https://qiskit.org/textbook/ch-states/representing-qubit-states.html" target="_blank">Representing Qubit States</a></p>
+        <p>4. 思考：为什么 n 个量子比特的状态空间维度是 2ⁿ 而不是 2n？（用张量积解释）</p>
+      </div>
+      <div class="analogy-box" style="text-align:left;">
+        <h4>下节课预告</h4>
+        <p>第2课：电子的量子特性（上）—— 薛定谔方程与自旋½系统</p>
+        <p>我们将深入推导：量子态如何随时间演化？电子自旋的数学描述是什么？</p>
+      </div>
+    </div>
+
+    <!-- Controls -->
+    <div class="controls">
+      <button id="prev" onclick="navigate(-1)">← 上一页</button>
+      <span class="slide-num" id="slideNum">1 / 12</span>
+      <button id="next" onclick="navigate(1)">下一页 →</button>
+    </div>
+  </div>
+
+  <script>
+    let current = 1;
+    const total = 12;
+
+    function navigate(dir) {
+      const newSlide = current + dir;
+      if (newSlide < 1 || newSlide > total) return;
+      const slides = document.querySelectorAll('.slide');
+      slides[current - 1].classList.remove('active');
+      slides[newSlide - 1].classList.add('active');
+      current = newSlide;
+      document.getElementById('slideNum').textContent = current + ' / ' + total;
+      document.getElementById('prev').disabled = (current === 1);
+      document.getElementById('next').disabled = (current === total);
+      if (current === 3) drawBlochSphere();
+    }
+
+    function checkQuiz1() {
+      const result = document.getElementById('quiz-result');
+      const selected = document.querySelector('input[name="q1"]:checked');
+      if (!selected) {
+        result.style.display = 'block';
+        result.className = 'quiz-result wrong';
+        result.textContent = '请选择一个选项 / Please select an option';
+        return;
+      }
+      if (selected.value === 'correct') {
+        result.style.display = 'block';
+        result.className = 'quiz-result correct';
+        result.innerHTML = '<b>正确！</b>量子计算机只在特定问题上展现指数级加速，不是在所有问题上都更快。';
+      } else {
+        result.style.display = 'block';
+        result.className = 'quiz-result wrong';
+        result.innerHTML = '<b>错误。</b>量子加速只在特定问题上有效，对排序、网页浏览等常见任务并无优势。';
+      }
+    }
+
+    // Draw Bloch sphere
+    function drawBlochSphere() {
+      const canvas = document.getElementById('blochCanvas');
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      const W = canvas.width, H = canvas.height;
+      const cx = W / 2, cy = H / 2, R = 120;
+      
+      ctx.clearRect(0, 0, W, H);
+      
+      // Sphere (circle)
+      ctx.strokeStyle = '#6366f1';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.arc(cx, cy, R, 0, 2 * Math.PI);
+      ctx.stroke();
+      
+      // Equator (ellipse)
+      ctx.strokeStyle = '#4b5563';
+      ctx.setLineDash([4, 4]);
+      ctx.beginPath();
+      ctx.ellipse(cx, cy, R, R * 0.35, 0, 0, 2 * Math.PI);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      
+      // Axes
+      ctx.strokeStyle = '#94a3b8';
+      ctx.lineWidth = 1;
+      // z axis
+      ctx.beginPath();
+      ctx.moveTo(cx, cy - R - 15);
+      ctx.lineTo(cx, cy + R + 15);
+      ctx.stroke();
+      // x axis
+      ctx.beginPath();
+      ctx.moveTo(cx - R - 15, cy);
+      ctx.lineTo(cx + R + 15, cy);
+      ctx.stroke();
+      
+      // Labels
+      ctx.fillStyle = '#fbbf24';
+      ctx.font = '14px sans-serif';
+      ctx.fillText('|0⟩', cx + 5, cy - R - 20);
+      ctx.fillText('|1⟩', cx + 5, cy + R + 30);
+      ctx.fillText('x', cx + R + 20, cy + 5);
+      ctx.fillText('z', cx + 5, cy - R - 20);
+      
+      // State vector (example: |+⟩ state)
+      const theta = Math.PI / 2; // on equator
+      const phi = 0;
+      const vx = cx + R * 0.9 * Math.sin(theta) * Math.cos(phi);
+      const vy = cy - R * 0.9 * Math.cos(theta);
+      
+      ctx.strokeStyle = '#4ade80';
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      ctx.moveTo(cx, cy);
+      ctx.lineTo(vx, vy);
+      ctx.stroke();
+      
+      // Arrow head
+      ctx.fillStyle = '#4ade80';
+      ctx.beginPath();
+      ctx.arc(vx, vy, 5, 0, 2 * Math.PI);
+      ctx.fill();
+      
+      // Theta arc
+      ctx.strokeStyle = '#a78bfa';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.arc(cx, cy, 30, -Math.PI/2, -Math.PI/2 + theta * 0.5);
+      ctx.stroke();
+      
+      ctx.fillStyle = '#a78bfa';
+      ctx.font = '12px sans-serif';
+      ctx.fillText('θ', cx + 35, cy - 15);
+      ctx.fillText('φ', cx + R * 0.5 + 10, cy - 5);
+      
+      // Title
+      ctx.fillStyle = '#94a3b8';
+      ctx.font = '12px sans-serif';
+      ctx.fillText('Bloch Sphere / 布洛赫球', 10, 20);
+    }
+
+    // Keyboard navigation
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'ArrowRight' || e.key === ' ') navigate(1);
+      else if (e.key === 'ArrowLeft') navigate(-1);
+    });
+
+    // Initialize KaTeX
+    document.addEventListener('DOMContentLoaded', function() {
+      renderMath(document.body);
+    });
+
+    function renderMath(container) {
+      const mathElements = container.querySelectorAll('.formula');
+      mathElements.forEach(el => {
+        if (!el.dataset.katexRendered) {
+          const spans = el.querySelectorAll('span.math');
+          spans.forEach(span => {
+            if (!span.dataset.katexRendered) {
+              katex.render(span.textContent, span, { throwOnError: false, displayMode: span.classList.contains('katex-display') });
+              span.dataset.katexRendered = 'true';
+            }
+          });
+          el.dataset.katexRendered = 'true';
+        }
+      });
+    }
+  </script>
+</body>
+</html>

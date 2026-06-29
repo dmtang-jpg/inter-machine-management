@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>第6课：超导物理 — BCS理论与库仑阻塞</title>
+  <link rel="stylesheet" href="/teach/modular/font-size-selector.js">
+  <script src="/teach/modular/pwd-check.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: #0a0e1a; color: #e0e0e0;
+      font-family: 'Segoe UI', 'Microsoft YaHei', system-ui, sans-serif;
+      min-height: 100vh; padding: 20px; line-height: 1.6;
+    }
+    .slide-container {
+      max-width: 1100px; margin: 0 auto;
+      background: linear-gradient(135deg, #0f172a 0%, #1a1a2e 100%);
+      border-radius: 12px; border: 1px solid #334155; overflow: hidden;
+    }
+    .slide {
+      display: none; padding: 40px 48px; min-height: 560px;
+      animation: fadeIn 0.3s ease-in;
+    }
+    .slide.active { display: block; }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .controls {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 14px 48px; background: #1a1a2e; border-top: 1px solid #334155;
+    }
+    .controls button {
+      background: #6366f1; color: white; border: none;
+      padding: 8px 20px; border-radius: 6px; cursor: pointer; font-size: 14px; font-family: inherit;
+    }
+    .controls button:hover { background: #4f46e5; }
+    .controls button:disabled { background: #4b5563; cursor: not-allowed; }
+    .controls .slide-num { color: #94a3b8; font-size: 14px; }
+
+    h1 { color: #60a5fa; font-size: 28px; margin-bottom: 12px; text-align: center; }
+    h2 { color: #818cf8; font-size: 22px; margin-bottom: 16px; border-bottom: 2px solid #4338ca; padding-bottom: 6px; }
+    h3 { color: #a78bfa; font-size: 18px; margin: 16px 0 8px 0; }
+    p { margin-bottom: 10px; color: #cbd5e1; font-size: 15px; }
+    .subtitle { text-align: center; color: #94a3b8; font-size: 14px; margin-bottom: 8px; }
+    .highlight { color: #fbbf24; font-weight: bold; }
+
+    .concept-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin: 14px 0; }
+    .concept-card {
+      background: linear-gradient(135deg, #1e293b, #0f172a);
+      border: 1px solid #6366f1; border-radius: 8px; padding: 14px 18px;
+    }
+    .concept-card h4 { color: #fbbf24; font-size: 15px; margin-bottom: 6px; }
+    .concept-card p { font-size: 13px; color: #94a3b8; margin-bottom: 4px; }
+
+    .analogy-box {
+      background: linear-gradient(135deg, rgba(99,102,241,0.1), rgba(167,139,250,0.05));
+      border-left: 4px solid #6366f1; border-radius: 0 8px 8px 0;
+      padding: 16px 20px; margin: 12px 0;
+    }
+    .analogy-box h4 { color: #a78bfa; margin-bottom: 8px; }
+    .analogy-box p { font-size: 14px; }
+
+    .math-box {
+      background: linear-gradient(135deg, rgba(99,102,241,0.08), rgba(99,102,241,0.02));
+      border: 1px solid #6366f1; border-radius: 8px; padding: 16px 20px; margin: 12px 0;
+    }
+    .math-box h4 { color: #a78bfa; margin-bottom: 8px; font-size: 15px; }
+    .math-box p { font-size: 14px; color: #cbd5e1; }
+    .formula { 
+      background: rgba(15,23,42,0.8); border-radius: 6px; padding: 10px 14px;
+      margin: 8px 0; text-align: center; font-size: 16px;
+    }
+
+    .quiz-box {
+      background: rgba(34,197,94,0.05); border: 1px solid #22c55e;
+      border-radius: 8px; padding: 16px 20px; margin: 14px 0;
+    }
+    .quiz-box h4 { color: #4ade80; margin-bottom: 8px; }
+    .quiz-box label { display: block; margin: 6px 0; cursor: pointer; }
+    .quiz-box input { margin-right: 8px; }
+    .quiz-box button {
+      background: #16a34a; color: white; border: none; padding: 6px 16px;
+      border-radius: 6px; cursor: pointer; margin-top: 6px;
+    }
+    .quiz-result { margin-top: 10px; padding: 8px 12px; border-radius: 4px; display: none; }
+    .quiz-result.correct { background: rgba(34,197,94,0.15); color: #4ade80; border: 1px solid #22c55e; }
+    .quiz-result.wrong { background: rgba(239,68,68,0.15); color: #f87171; border: 1px solid #ef4444; }
+
+    canvas {
+      background: #0a0e1a; border: 1px solid #334155; border-radius: 8px;
+      display: block; margin: 12px auto;
+    }
+
+    table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 14px; }
+    th { background: #1e293b; color: #fbbf24; padding: 10px 14px; text-align: left; border: 1px solid #334155; }
+    td { background: rgba(15,23,42,0.6); color: #cbd5e1; padding: 10px 14px; border: 1px solid #334155; }
+  </style>
+</head>
+<body>
+  <div class="slide-container">
+    <!-- Slide 1: Title -->
+    <div class="slide active">
+      <div class="subtitle">量子计算入门 · 第6课 / Quantum Computing Lesson 6</div>
+      <h1>超导物理<br><span style="font-size:18px;color:#94a3b8;">BCS Theory, London Equations & Coulomb Blockade</span></h1>
+      <div class="concept-grid" style="grid-template-columns: 1fr;">
+        <div class="concept-card">
+          <h4>学习目标 / Learning Objectives</h4>
+          <p>1. 理解BCS理论和库珀对 / Understand BCS theory and Cooper pairing</p>
+          <p>2. 掌握London方程和磁场穿透深度 / Master London equations and penetration depth</p>
+          <p>3. 理解库仑阻塞效应 / Understand Coulomb blockade</p>
+          <p>4. 了解超导能隙的微观起源 / Origin of superconducting gap</p>
+    <p style="color:#94a3b8;font-size:12px;margin-top:8px;">
+      <b>课前预习：</b><a href="quantum_prerequisites.html#hermitian" style="color:#818cf8;">厄米算符</a> · <a href="quantum_prerequisites.html#time-evolution" style="color:#818cf8;">时间演化</a>
+    </p>
+        </div>
+      </div>
+      <p align="center" style="margin-top:20px;color:#a78bfa;">
+        <b>教学方式</b>：讲授 · 推导 · 可视化 / <b>课时</b>：45分钟
+      </p>
+    </div>
+
+    <!-- Slide 2: Introduction to Superconductivity -->
+    <div class="slide">
+      <h2>超导现象 / Superconductivity Phenomenon</h2>
+      <div class="concept-grid">
+        <div class="concept-card">
+          <h4>零电阻 / Zero Resistance</h4>
+          <p>• 低于临界温度 Tc，直流电阻严格为0</p>
+          <p>• 持续电流实验证实：无能量损耗</p>
+          <p>• 与理想导体不同（后者仅无电阻）</p>
+        </div>
+        <div class="concept-card">
+          <h4>完全抗磁性 / Perfect Diamagnetism (Meissner)</h4>
+          <p>• 超导体内部 B = 0</p>
+          <p>• 磁场被排出体外</p>
+          <p>• 不是零电阻的推论！是独立性质</p>
+        </div>
+      </div>
+      <div class="analogy-box">
+        <h4>关键澄清：超导 ≠ 理想导体</h4>
+        <p>理想导体：电阻为零，但内部磁场保持不变（法拉第定律）。</p>
+        <p>超导体：零电阻 + 主动排出磁场（Meissner效应）。这是热力学相变！</p>
+      </div>
+      <div class="math-box">
+        <h4>临界参数 / Critical Parameters</h4>
+        <div class="formula">
+          T_c (临界温度),　 H_c (临界磁场),　 J_c (临界电流密度)
+        </div>
+        <p>三者都是阈值：超过任何一个，超导态被破坏。</p>
+      </div>
+    </div>
+
+    <!-- Slide 3: BCS Theory -->
+    <div class="slide">
+      <h2>BCS 理论 / Bardeen-Cooper-Schrieffer Theory</h2>
+      <div class="concept-grid">
+        <div class="concept-card">
+          <h4>库珀对 / Cooper Pair</h4>
+          <p>• 两个电子通过晶格振动（声子）间接吸引</p>
+          <p>• 总自旋 S = 0（自旋单态）</p>
+          <p>• 总动量 q ≈ 0（动量相反）</p>
+          <p>• 束缚能 ~ meV 量级</p>
+        </div>
+        <div class="concept-card">
+          <h4>BCS 基态 / BCS Ground State</h4>
+          <p>• 所有库珀对凝聚到同一量子态</p>
+          <p>• 宏观波函数 Ψ = |Ψ|e^{iφ}</p>
+          <p>• 相位 φ 宏观相干</p>
+          <p>→ 零电阻的起源</p>
+        </div>
+      </div>
+      <div class="math-box">
+        <h4>BCS 哈密顿量 / BCS Hamiltonian</h4>
+        <div class="formula">
+          Ĥ = Σ<sub>kσ</sub> ε<sub>k</sub> c<sup>†</sup><sub>kσ</sub>c<sub>kσ</sub> + Σ<sub>k,k'</sub> V<sub>kk'</sub> c<sup>†</sup><sub>k↑</sub>c<sup>†</sup><sub>-k↓</sub>c<sub>k'↓</sub>c<sub>-k'↑</sub>
+        </div>
+        <p>c<sup>†</sup><sub>kσ</sub> 是动量 k、自旋 σ 的电子产生算符。最后一项是电子-电子散射（声子媒介）。</p>
+      </div>
+      <div class="math-box">
+        <h4>能隙方程 / Gap Equation</h4>
+        <div class="formula">
+          Δ(T) = Δ(0) tanh($\frac{π k_B T_c}{Δ(0)} \sqrt{\frac{8}{7ζ(3)}(\frac{T_c}{T} - 1)}$)
+        </div>
+        <p>在 T = 0 时，Δ(0) ≈ 1.76 k<sub>B</sub>T<sub>c</sub>（弱耦合极限）。</p>
+      </div>
+    </div>
+
+    <!-- Slide 4: London Equations -->
+    <div class="slide">
+      <h2>London 方程 / London Equations</h2>
+      <p>唯象描述超导体电磁性质的两个方程：</p>
+      <div class="math-box">
+        <h4>第一 London 方程 / First London Equation</h4>
+        <div class="formula">
+          $\frac{\partial \mathbf{J}_s}{\partial t} = \frac{n_s e^2}{m_e} \mathbf{E}$
+        </div>
+        <p>超流电流变化率 ∝ 电场（而不是 J ∝ E，即电阻性）。</p>
+      </div>
+      <div class="math-box">
+        <h4>第二 London 方程 / Second London Equation</h4>
+        <div class="formula">
+          $\nabla \times \mathbf{J}_s = -\frac{n_s e^2}{m_e c} \mathbf{B}$
+        </div>
+        <p>结合麦克斯韦方程，给出指数衰减的磁场：</p>
+        <div class="formula">
+          $\mathbf{B}(x) = \mathbf{B}_0 e^{-x/\lambda_L}$
+        </div>
+      </div>
+      <div class="math-box">
+        <h4>London 穿透深度 / London Penetration Depth</h4>
+        <div class="formula">
+          $\lambda_L = \sqrt{\frac{m_e}{\mu_0 n_s e^2}}$
+        </div>
+        <p>n_s 是超流电子密度。λ_L ~ 50-500 nm（典型值）。</p>
+      </div>
+      <div style="display:flex;justify-content:center;">
+        <canvas id="londonCanvas" width="600" height="280"></canvas>
+      </div>
+    </div>
+
+    <!-- Slide 5: Coulomb Blockade -->
+    <div class="slide">
+      <h2>库仑阻塞 / Coulomb Blockade</h2>
+      <p>小电容结对中，单电子充电能阻止后续电子隧穿：</p>
+      <div class="math-box">
+        <h4>充电能 / Charging Energy</h4>
+        <div class="formula">
+          $E_c = \frac{e^2}{2C_\Sigma}$
+        </div>
+        <p>C_Σ 是结的总电容。当结尺寸 < 100 nm，E_c 可以与热能 k_BT 相比拟。</p>
+      </div>
+      <div class="math-box">
+        <h4>阻塞条件 / Blockade Condition</h4>
+        <div class="formula">
+          $eV_{bias} < E_c$ 且 $k_B T \ll E_c$
+        </div>
+        <p>外电压提供的能量 < 充电能 → 电子无法隧穿 → 电流被抑制。</p>
+      </div>
+      <div class="concept-grid">
+        <div class="concept-card">
+          <h4>单电子晶体管 / Single-Electron Transistor (SET)</h4>
+          <p>• 栅极电压控制岛电位</p>
+          <p>• 库仑振荡：电流随 V_g 周期变化</p>
+          <p>• 周期 ΔV_g = e/C_g</p>
+        </div>
+        <div class="concept-card">
+          <h4>应用</h4>
+          <p>• 电荷传感器（极高灵敏度）</p>
+          <p>• 电流标准（单电子泵）</p>
+          <p>• 量子点量子比特</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 6: Superconducting Qubits -->
+    <div class="slide">
+      <h2>超导量子比特分类 / Types of Superconducting Qubits</h2>
+      <table>
+        <tr><th>类型</th><th>哈密顿量</th><th>量子数</th></tr>
+        <tr>
+          <td>电荷量子比特 (Charge/Coulomb box)</td>
+          <td>Ĥ = 4E_C(n̂ - n_g)² - E_J cos(φ̂)</td>
+          <td>电荷数 n̂</td>
+        </tr>
+        <tr>
+          <td>磁通量子比特 (Flux qubit)</td>
+          <td>Ĥ = Q²/(2C) - E_J cos(φ̂) + (Φ_ext - Φ₀/2)²/(2L)</td>
+          <td>磁通 φ</td>
+        </tr>
+        <tr>
+          <td>Transmon</td>
+          <td>Ĥ ≈ 4E_C n̂² + E_J(1 - φ̂²/2)</td>
+          <td>电荷数（大E_J/E_C极限）</td>
+        </tr>
+      </table>
+      <div class="math-box">
+        <h4>关键参数比 / Key Parameter Ratio</h4>
+        <div class="formula">
+          $E_J/E_C$ 决定量子比特性质
+        </div>
+        <p>E_J/E_C ≪ 1：电荷量子比特（电荷噪声敏感）</p>
+        <p>E_J/E_C ≫ 1：Transmon（磁通噪声敏感，但对电荷噪声不敏感）</p>
+      </div>
+      <div class="analogy-box">
+        <h4>为什么 E_J/E_C 很重要？</h4>
+        <p>量子比特极化取决于参数比。E_J/E_C ~ 50-80 是 Transmon 的优化值。</p>
+        <p>下一课我们将详细推导 Transmon 的能谱。</p>
+      </div>
+    </div>
+
+    <!-- Slide 7: Quiz -->
+    <div class="slide">
+      <h2>课堂互动 / Quiz</h2>
+      <div class="quiz-box">
+        <h4>问题1：超导与理想导体的区别是</h4>
+        <label><input type="radio" name="q1" value="wrong"> A. 超导有临界温度，理想导体没有</label>
+        <label><input type="radio" name="q1" value="correct"> B. 超导有Meissner效应（完全抗磁性），理想导体没有</label>
+        <label><input type="radio" name="q1" value="wrong"> C. 超导电阻严格为零，理想导体电阻接近零</label>
+        <button onclick="checkQuiz1()">检查答案</button>
+        <div id="quiz-result-1" class="quiz-result"></div>
+      </div>
+      <div class="quiz-box">
+        <h4>问题2：库仑阻塞发生的条件</h4>
+        <label><input type="radio" name="q2" value="wrong"> A. k_BT ≫ E_c</label>
+        <label><input type="radio" name="q2" value="correct"> B. k_BT ≪ E_c 且 eV_bias &lt; E_c</label>
+        <label><input type="radio" name="q2" value="wrong"> C. 高温大电容</label>
+        <button onclick="checkQuiz2()">检查答案</button>
+        <div id="quiz-result-2" class="quiz-result"></div>
+      </div>
+    </div>
+
+    <!-- Slide 8: Summary -->
+    <div class="slide" style="text-align:center;">
+      <h2>课堂总结 / Summary</h2>
+      <div class="concept-grid">
+        <div class="concept-card">
+          <h4>1. BCS 理论</h4>
+          <p>• 库珀对通过声子媒介吸引形成</p>
+          <p>• 能隙 Δ ≈ 1.76 k_B T_c</p>
+        </div>
+        <div class="concept-card">
+          <h4>2. London 方程</h4>
+          <p>• 磁场指数衰减，穿透深度 λ_L</p>
+          <p>• 超流电流变化率 ∝ E</p>
+        </div>
+        <div class="concept-card">
+          <h4>3. 库仑阻塞</h4>
+          <p>• E_c = e²/(2C_Σ)</p>
+          <p>• 低温小电容条件</p>
+        </div>
+        <div class="concept-card">
+          <h4>4. 超导量子比特</h4>
+          <p>• E_J/E_C 比决定比特性质</p>
+          <p>• Transmon: E_J/E_C ≫ 1</p>
+        </div>
+      </div>
+      <div class="analogy-box" style="text-align:left;">
+        <h4>下节课预告</h4>
+        <p>第7-8课：Transmon 电路 —— 库珀对盒子、电荷色散、Transmon 能谱推导</p>
+      </div>
+    </div>
+
+    <!-- Controls -->
+    <div class="controls">
+      <button id="prev" onclick="navigate(-1)">← 上一页</button>
+      <span class="slide-num" id="slideNum">1 / 8</span>
+      <button id="next" onclick="navigate(1)">下一页 →</button>
+    </div>
+  </div>
+
+  <script>
+    let current = 1;
+    const totalSlides = 8;
+
+    function navigate(dir) {
+      const newSlide = current + dir;
+      if (newSlide < 1 || newSlide > totalSlides) return;
+      const slides = document.querySelectorAll('.slide');
+      slides[current - 1].classList.remove('active');
+      slides[newSlide - 1].classList.add('active');
+      current = newSlide;
+      document.getElementById('slideNum').textContent = current + ' / ' + totalSlides;
+      document.getElementById('prev').disabled = (current === 1);
+      document.getElementById('next').disabled = (current === totalSlides);
+      if (current === 4) drawLondon();
+    }
+
+    function checkQuiz1() {
+      const result = document.getElementById('quiz-result-1');
+      const selected = document.querySelector('input[name="q1"]:checked');
+      if (!selected) { result.style.display = 'block'; result.className = 'quiz-result wrong'; result.textContent = '请选择一个选项'; return; }
+      if (selected.value === 'correct') {
+        result.style.display = 'block'; result.className = 'quiz-result correct';
+        result.innerHTML = '<b>正确！</b>超导有两个独立特性：零电阻和完全抗磁性。理想导体只有零电阻，不主动排出磁场。';
+      } else {
+        result.style.display = 'block'; result.className = 'quiz-result wrong';
+        result.innerHTML = <b>错误。</b>Meissner效应（完全抗磁性）是超导的独立性质，不能从零电阻推导出来。';
+      }
+    }
+
+    function checkQuiz2() {
+      const result = document.getElementById('quiz-result-2');
+      const selected = document.querySelector('input[name="q2"]:checked');
+      if (!selected) { result.style.display = 'block'; result.className = 'quiz-result wrong'; result.textContent = '请选择一个选项'; return; }
+      if (selected.value === 'correct') {
+        result.style.display = 'block'; result.className = 'quiz-result correct';
+        result.innerHTML = '<b>正确！</b>库仑阻塞需要 E_c ≫ k_BT（温度足够低）且 eV_bias < E_c（偏压足够小）。';
+      } else {
+        result.style.display = 'block'; result.className = 'quiz-result wrong';
+        result.innerHTML = '<b>错误。</b>库仑阻塞条件：E_c ≫ k_BT 且 eV_bias < E_c。此时单电子充电能阻止隧穿。';
+      }
+    }
+
+    // Draw London penetration depth
+    function drawLondon() {
+      const canvas = document.getElementById('londonCanvas');
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      const W = canvas.width, H = canvas.height;
+      ctx.clearRect(0, 0, W, H);
+      
+      const x0 = 80, y0 = H / 2;
+      const lambda = 120;
+      
+      // Draw surface
+      ctx.strokeStyle = '#60a5fa';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(x0, 30);
+      ctx.lineTo(x0, H - 30);
+      ctx.stroke();
+      
+      // Superconductor label
+      ctx.fillStyle = '#60a5fa';
+      ctx.font = '14px sans-serif';
+      ctx.fillText('超导体 →', x0 + 10, 50);
+      
+      // Magnetic field decay
+      ctx.strokeStyle = '#fbbf24';
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      for (let x = x0; x < W - 40; x += 2) {
+        const t = (x - x0) / lambda;
+        const B = Math.exp(-t);
+        const y = y0 + (H/2 - 60) * B;
+        if (x === x0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      }
+      ctx.stroke();
+      
+      // B_0 label
+      ctx.fillStyle = '#fbbf24';
+      ctx.font = 'bold 14px sans-serif';
+      ctx.fillText('B₀', x0 - 30, y0 + (H/2-60) + 5);
+      
+      // lambda marker
+      ctx.strokeStyle = '#4ade80';
+      ctx.setLineDash([5, 5]);
+      ctx.beginPath();
+      ctx.moveTo(x0 + lambda, 60);
+      ctx.lineTo(x0 + lambda, H - 60);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      
+      ctx.fillStyle = '#4ade80';
+      ctx.font = 'bold 14px sans-serif';
+      ctx.fillText('λ_L = 穿透深度', x0 + lambda + 5, y0);
+      
+      // B equation
+      ctx.fillStyle = '#a78bfa';
+      ctx.font = 'italic 14px sans-serif';
+      ctx.fillText('B(x) = B₀ e^{-x/λ_L}', W/2 - 60, H - 25);
+      
+      // Exterior label
+      ctx.fillStyle = '#94a3b8';
+      ctx.font = '12px sans-serif';
+      ctx.fillText('外磁场 B₀', x0 + 150, H/2 - 20);
+    }
+
+    // Keyboard navigation
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'ArrowRight' || e.key === ' ') navigate(1);
+      else if (e.key === 'ArrowLeft') navigate(-1);
+    });
+
+    // Initialize KaTeX
+    document.addEventListener('DOMContentLoaded', function() {
+      renderMath(document.body);
+    });
+
+    function renderMath(container) {
+      const mathElements = container.querySelectorAll('.formula');
+      mathElements.forEach(el => {
+        if (!el.dataset.katexRendered) {
+          const spans = el.querySelectorAll('span.math');
+          spans.forEach(span => {
+            if (!span.dataset.katexRendered) {
+              katex.render(span.textContent, span, { throwOnError: false, displayMode: span.classList.contains('katex-display') });
+              span.dataset.katexRendered = 'true';
+            }
+          });
+          el.dataset.katexRendered = 'true';
+        }
+      });
+    }
+  </script>
+</body>
+</html>

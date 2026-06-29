@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>第10课：Grover算法</title>
+  <link rel="stylesheet" href="/teach/modular/font-size-selector.js">
+  <script src="/teach/modular/pwd-check.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: #0a0e1a; color: #e0e0e0; font-family: 'Segoe UI', 'Microsoft YaHei', system-ui, sans-serif; min-height: 100vh; padding: 20px; line-height: 1.6; }
+    .slide-container { max-width: 1100px; margin: 0 auto; background: linear-gradient(135deg, #0f172a, #1a1a2e); border-radius: 12px; border: 1px solid #334155; overflow: hidden; }
+    .slide { display: none; padding: 40px 48px; min-height: 560px; animation: fadeIn 0.3s ease-in; }
+    .slide.active { display: block; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    .controls { display: flex; justify-content: space-between; align-items: center; padding: 14px 48px; background: #1a1a2e; border-top: 1px solid #334155; }
+    .controls button { background: #6366f1; color: white; border: none; padding: 8px 20px; border-radius: 6px; cursor: pointer; font-size: 14px; }
+    .controls button:hover { background: #4f46e5; }
+    .controls button:disabled { background: #4b5563; cursor: not-allowed; }
+    .controls .slide-num { color: #94a3b8; font-size: 14px; }
+    h1 { color: #60a5fa; font-size: 28px; text-align: center; margin-bottom: 12px; }
+    h2 { color: #818cf8; font-size: 22px; margin-bottom: 16px; border-bottom: 2px solid #4338ca; padding-bottom: 6px; }
+    h3 { color: #a78bfa; font-size: 18px; margin: 16px 0 8px 0; }
+    p { margin-bottom: 10px; color: #cbd5e1; font-size: 15px; }
+    .subtitle { text-align: center; color: #94a3b8; font-size: 14px; margin-bottom: 8px; }
+    .concept-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin: 14px 0; }
+    .concept-card { background: linear-gradient(135deg, #1e293b, #0f172a); border: 1px solid #6366f1; border-radius: 8px; padding: 14px 18px; }
+    .concept-card h4 { color: #fbbf24; font-size: 15px; margin-bottom: 6px; }
+    .concept-card p { font-size: 13px; color: #94a3b8; margin-bottom: 4px; }
+    .analogy-box { background: linear-gradient(135deg, rgba(99,102,241,0.1), rgba(167,139,250,0.05)); border-left: 4px solid #6366f1; padding: 16px 20px; margin: 12px 0; }
+    .analogy-box h4 { color: #a78bfa; margin-bottom: 8px; }
+    .math-box { background: linear-gradient(135deg, rgba(99,102,241,0.08), rgba(99,102,241,0.02)); border: 1px solid #6366f1; border-radius: 8px; padding: 16px 20px; margin: 12px 0; }
+    .math-box h4 { color: #a78bfa; margin-bottom: 8px; font-size: 15px; }
+    .formula { background: rgba(15,23,42,0.8); border-radius: 6px; padding: 10px 14px; margin: 8px 0; text-align: center; font-size: 16px; }
+    canvas { background: #0a0e1a; border: 1px solid #334155; border-radius: 8px; display: block; margin: 12px auto; }
+    table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 14px; }
+    th { background: #1e293b; color: #fbbf24; padding: 10px 14px; text-align: left; border: 1px solid #334155; }
+    td { background: rgba(15,23,42,0.6); color: #cbd5e1; padding: 10px 14px; border: 1px solid #334155; }
+    .derivation-step { background: rgba(99,102,241,0.05); border-left: 3px solid #6366f1; padding: 8px 14px; margin: 6px 0; font-size: 14px; }
+    .quiz-box { background: rgba(34,197,94,0.05); border: 1px solid #22c55e; border-radius: 8px; padding: 16px 20px; margin: 14px 0; }
+    .quiz-box h4 { color: #4ade80; margin-bottom: 8px; }
+    .quiz-box label { display: block; margin: 6px 0; cursor: pointer; }
+    .quiz-box input { margin-right: 8px; }
+    .quiz-result { margin-top: 10px; padding: 8px 12px; border-radius: 4px; display: none; }
+    .quiz-result.correct { background: rgba(34,197,94,0.15); color: #4ade80; border: 1px solid #22c55e; }
+    .quiz-result.wrong { background: rgba(239,68,68,0.15); color: #f87171; border: 1px solid #ef4444; }
+  </style>
+</head>
+<body>
+  <div class="slide-container">
+    <!-- Slide 1: Title -->
+    <div class="slide active">
+      <div class="subtitle">量子计算入门 · 第10课 / Quantum Computing Lesson 10</div>
+      <h1>Grover算法<br><span style="font-size:18px;color:#94a3b8;">几何可视化、成功率分析、严格证明</span></h1>
+      <div class="concept-grid" style="grid-template-columns: 1fr;">
+        <div class="concept-card">
+          <h4>学习目标 / Learning Objectives</h4>
+          <p>1. 理解Grover算法的几何解释（关于平均值反射）</p>
+          <p>2. 掌握Grover迭代算子的推导</p>
+          <p>3. 证明最优迭代次数 N_opt = ⌊π√M/4⌋</p>
+          <p>4. 分析成功率随迭代次数的变化</p>
+          <p>5. 理解Grover算法与经典下界的关系</p>
+    <p style="color:#94a3b8;font-size:12px;margin-top:8px;">
+      <b>课前预习：</b><a href="quantum_prerequisites.html#complex" style="color:#818cf8;">复数与欧拉公式</a> · <a href="quantum_prerequisites.html#hermitian" style="color:#818cf8;">厄米算符</a>
+    </p>
+        </div>
+      </div>
+      <p align="center" style="margin-top:20px;color:#a78bfa;"><b>教学方式</b>：讲授 · 几何可视化 · 严格推导 / <b>课时</b>：45分钟</p>
+    </div>
+
+    <!-- Slide 2: Problem Setup -->
+    <div class="slide">
+      <h2>问题设置 / Problem Setup</h2>
+      <div class="analogy-box">
+        <h4>无序搜索问题</h4>
+        <p>给定 N = 2ⁿ 个元素的数据库，其中恰好有 M 个元素满足某个性质 f(x) = 1。</p>
+        <p>经典方法：平均需要 N/M 次查询 → O(N/M) 复杂度。</p>
+        <p>Grover算法：O(√(N/M)) 次查询 → 二次加速！</p>
+      </div>
+      <div class="math-box">
+        <h4>量子 Oracle</h4>
+        <div class="formula">
+          U_w|x⟩ = (-1)^{f(x)} |x⟩ = |x⟩ - 2|x⟩⟨x|w⟩
+        </div>
+        <p>Oracle 翻转目标态的相位：U_w|w⟩ = -|w⟩，对 |x⟩ ≠ w 无影响。</p>
+        <div class="derivation-step">
+          <b>推导</b>：U_w = I - 2|w⟩⟨w|（关于 |w⟩ 的反射）
+          <div class="formula">$U_w|x⟩ = |x⟩ - 2|w⟩⟨w|x⟩ = |x⟩ - 2\delta_{xw}|w⟩$</div>
+        </div>
+      </div>
+      <div class="math-box">
+        <h4>初态准备</h4>
+        <div class="formula">
+          |s⟩ = H⊗ⁿ|0...0⟩ = $\frac{1}{\sqrt{N}}$ Σ |x⟩
+        </div>
+        <p>所有基态的均匀叠加 → 初始概率幅 α = 1/√N。</p>
+      </div>
+    </div>
+
+    <!-- Slide 3: Grover Iteration -->
+    <div class="slide">
+      <h2>Grover 迭代 / Grover Iteration</h2>
+      <div class="math-box">
+        <h4>一次迭代 = 两步 / Two Steps per Iteration</h4>
+        <div class="formula">
+          1. Oracle 反射：U_w = I - 2|w⟩⟨w|（关于 |w⟩ 反射）
+        </div>
+        <div class="formula">
+          2. 扩散算子（关于平均值反射）：U_s = 2|s⟩⟨s| - I
+        </div>
+        <p>Grover 算子：G = U_s · U_w</p>
+      </div>
+      <div class="math-box">
+        <h4>几何解释 / Geometric Interpretation</h4>
+        <p>定义两个正交向量：</p>
+        <div class="formula">
+          |w⊥⟩ = (|w⟩ - |s⟩cosθ)/sinθ,　 |s⟩ = sinθ |w⟩ + cosθ |w⊥⟩
+        </div>
+        <p>其中 sinθ = √(M/N)。每次 G 使状态向量向 |w⟩ 旋转 2θ。</p>
+      </div>
+      <div style="display:flex;justify-content:center;">
+        <canvas id="groverCanvas" width="500" height="400"></canvas>
+      </div>
+    </div>
+
+    <!-- Slide 4: Rigorous Proof -->
+    <div class="slide">
+      <h2>严格证明 / Rigorous Proof</h2>
+      <div class="math-box">
+        <h4>旋转角度推导</h4>
+        <div class="formula">
+          G = (2|s⟩⟨s| - I)(I - 2|w⟩⟨w|)
+        </div>
+        <p>在 {|w⟩, |w⊥⟩} 基下，G 是旋转矩阵：</p>
+        <div class="formula">
+          G = $\begin{pmatrix} \cos 2θ & -\sin 2θ \\ \sin 2θ & \cos 2θ \end{pmatrix}$
+        </div>
+      </div>
+      <div class="math-box">
+        <h4>k 次迭代后</h4>
+        <div class="formula">
+          G^k |s⟩ = sin((2k+1)θ) |w⟩ + cos((2k+1)θ) |w⊥⟩
+        </div>
+        <p>成功概率：P(k) = sin²((2k+1)θ)</p>
+      </div>
+      <div class="math-box">
+        <h4>最优迭代次数</h4>
+        <div class="formula">
+          (2k+1)θ ≈ π/2 → k_opt = ⌊π/(4θ)⌋ ≈ ⌊π√(N/M)/4⌋
+        </div>
+        <p>当 N 很大时，θ ≈ √(M/N)，所以 k_opt ≈ π√(N/M)/4。</p>
+        <p>最大成功率：P_max ≈ 1 - O(M/N)</p>
+      </div>
+    </div>
+
+    <!-- Slide 5: Success Probability Curve -->
+    <div class="slide">
+      <h2>成功率曲线 / Success Probability Curve</h2>
+      <p>Grover 算法的成功概率 P(k) = sin²((2k+1)θ) 随迭代次数振荡：</p>
+      <div style="display:flex;justify-content:center;">
+        <canvas id="probCanvas" width="600" height="300"></canvas>
+      </div>
+      <div class="analogy-box">
+        <h4>关键观察</h4>
+        <p>• 超过最优迭代次数后，成功率反而下降！</p>
+        <p>• 这是量子算法的"过冲"现象。</p>
+        <p>• 如果不知道 w* 的确切位置，需要随机停止策略。</p>
+      </div>
+    </div>
+
+    <!-- Slide 6: Classical Lower Bound -->
+    <div class="slide">
+      <h2>经典下界 / Classical Lower Bound</h2>
+      <div class="analogy-box">
+        <h4>Yao 下界定理 (1994)</h4>
+        <p>任何经典随机算法要找到 w*，期望查询次数 ≥ (1-o(1))√(N/M)/2。</p>
+        <p>Grover 算法是最优的（在常数因子内）！</p>
+      </div>
+      <div class="concept-grid">
+        <div class="concept-card">
+          <h4>经典</h4>
+          <p>• 确定性：N/M 次查询</p>
+          <p>• 随机化：N/(2M) 次查询</p>
+        </div>
+        <div class="concept-card">
+          <h4>量子</h4>
+          <p>• Grover：√(N/M)/4 次查询</p>
+          <p>• 最优（BBHT 证明）</p>
+        </div>
+      </div>
+      <div class="math-box">
+        <h4>BBHT 下界 (Bernstein-Vazirani-Høyer-Tappar)</h4>
+        <div class="formula">
+          任何量子算法需要 Ω(√(N/M)) 次查询
+        </div>
+        <p>Grover 算法达到此下界 → 渐近最优。</p>
+      </div>
+    </div>
+
+    <!-- Slide 7: Multi-Target Grover -->
+    <div class="slide">
+      <h2>多目标 Grover / Multi-Target Grover</h2>
+      <div class="math-box">
+        <h4>t 个目标元素</h4>
+        <div class="formula">
+          k_opt = ⌊π√(N/t)/4⌋
+        </div>
+        <p>目标越多，需要的迭代次数越少。</p>
+      </div>
+      <div class="math-box">
+        <h4>量子计数 (Quantum Counting)</h4>
+        <p>结合量子相位估计，先估计目标数量 t，再运行 Grover。</p>
+        <div class="formula">
+          t ≈ N sin²(θ)
+        </div>
+      </div>
+      <div class="analogy-box">
+        <h4>实际应用</h4>
+        <p>Grover 算法是许多量子算法的子程序，如量子计数、量子优化等。</p>
+        <p>在密码学中，Grover 算法可以将暴力破解密钥的时间从 O(2ⁿ) 降低到 O(2^(n/2))。</p>
+      </div>
+    </div>
+
+    <!-- Slide 8: Summary -->
+    <div class="slide">
+      <h2>课堂总结 / Summary</h2>
+      <div class="concept-grid">
+        <div class="concept-card">
+          <h4>1. 算法步骤</h4>
+          <p>• 制备均匀叠加态 |s⟩</p>
+          <p>• 重复 k 次：Oracle + 扩散</p>
+          <p>• 测量得到 w*</p>
+        </div>
+        <div class="concept-card">
+          <h4>2. 几何图像</h4>
+          <p>• 每次迭代旋转 2θ</p>
+          <p>• θ ≈ √(M/N)</p>
+        </div>
+        <div class="concept-card">
+          <h4>3. 最优迭代</h4>
+          <p>• k_opt = ⌊π√(N/M)/4⌋</p>
+          <p>• P_max ≈ 1 - O(M/N)</p>
+        </div>
+        <div class="concept-card">
+          <h4>4. 最优性</h4>
+          <p>• 经典下界 Ω(√(N/M))</p>
+          <p>• Grover 达到下界</p>
+        </div>
+      </div>
+      <div class="analogy-box" style="text-align:left;">
+        <h4>下节课预告</h4>
+        <p>第11课：纠缠实现与量子优势 —— CHSH不等式、Deutsch-Jozsa、Shor简介</p>
+      </div>
+    </div>
+
+    <!-- Controls -->
+    <div class="controls">
+      <button id="prev" onclick="navigate(-1)">← 上一页</button>
+      <span class="slide-num" id="slideNum">1 / 8</span>
+      <button id="next" onclick="navigate(1)">下一页 →</button>
+    </div>
+  </div>
+
+  <script>
+    let current = 1;
+    const totalSlides = 8;
+
+    function navigate(dir) {
+      const newSlide = current + dir;
+      if (newSlide < 1 || newSlide > totalSlides) return;
+      document.querySelectorAll('.slide')[current - 1].classList.remove('active');
+      document.querySelectorAll('.slide')[newSlide - 1].classList.add('active');
+      current = newSlide;
+      document.getElementById('slideNum').textContent = current + ' / ' + totalSlides;
+      document.getElementById('prev').disabled = (current === 1);
+      document.getElementById('next').disabled = (current === totalSlides);
+      if (current === 3) drawGroverGeom();
+      if (current === 5) drawProbCurve();
+    }
+
+    // Draw Grover geometry
+    function drawGroverGeom() {
+      const canvas = document.getElementById('groverCanvas');
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      const W = canvas.width, H = canvas.height;
+      ctx.clearRect(0, 0, W, H);
+      
+      const cx = W / 2, cy = H / 2 + 20;
+      const R = 140;
+      
+      // Draw axes
+      ctx.strokeStyle = '#334155';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(cx - R - 30, cy);
+      ctx.lineTo(cx + R + 30, cy);
+      ctx.moveTo(cx, cy - R - 30);
+      ctx.lineTo(cx, cy + R + 30);
+      ctx.stroke();
+      
+      // Labels
+      ctx.fillStyle = '#fbbf24';
+      ctx.font = 'bold 14px sans-serif';
+      ctx.fillText('|w⟩ (target)', cx + R + 35, cy + 5);
+      ctx.fillStyle = '#a78bfa';
+      ctx.fillText('|w⊥⟩', cx + 5, cy - R - 35);
+      
+      // Initial state |s⟩
+      const theta = 0.15; // small angle
+      const sx = cx + R * Math.sin(theta);
+      const sy = cy - R * Math.cos(theta);
+      
+      // Draw arc for theta
+      ctx.strokeStyle = '#4ade80';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.arc(cx, cy, 30, -Math.PI/2 + theta, -Math.PI/2);
+      ctx.stroke();
+      ctx.fillStyle = '#4ade80';
+      ctx.font = '12px sans-serif';
+      ctx.fillText('θ', cx + 35, cy - 10);
+      
+      // Draw state vector |s⟩
+      ctx.strokeStyle = '#6366f1';
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      ctx.moveTo(cx, cy);
+      ctx.lineTo(sx, sy);
+      ctx.stroke();
+      ctx.fillStyle = '#6366f1';
+      ctx.beginPath();
+      ctx.arc(sx, sy, 5, 0, 2 * Math.PI);
+      ctx.fill();
+      ctx.fillText('|s⟩', sx + 10, sy);
+      
+      // After one Grover iteration: rotate by 2θ
+      const s2x = cx + R * Math.sin(3 * theta);
+      const s2y = cy - R * Math.cos(3 * theta);
+      
+      ctx.strokeStyle = '#fbbf24';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(cx, cy);
+      ctx.lineTo(s2x, s2y);
+      ctx.stroke();
+      ctx.fillStyle = '#fbbf24';
+      ctx.beginPath();
+      ctx.arc(s2x, s2y, 4, 0, 2 * Math.PI);
+      ctx.fill();
+      ctx.fillText('G|s⟩', s2x + 10, s2y);
+      
+      // Arc for 2θ
+      ctx.strokeStyle = '#f87171';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.arc(cx, cy, 50, -Math.PI/2 + 3*theta, -Math.PI/2 + theta);
+      ctx.stroke();
+      ctx.fillStyle = '#f87171';
+      ctx.fillText('2θ', cx + 55, cy - 30);
+      
+      // Title
+      ctx.fillStyle = '#94a3b8';
+      ctx.font = '12px sans-serif';
+      ctx.fillText('Grover 几何：每次迭代旋转 2θ', 10, 20);
+    }
+
+    // Draw probability curve
+    function drawProbCurve() {
+      const canvas = document.getElementById('probCanvas');
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      const W = canvas.width, H = canvas.height;
+      ctx.clearRect(0, 0, W, H);
+      
+      const N = 256; // 2^8
+      const theta = 1 / Math.sqrt(N);
+      const kOpt = Math.floor(Math.PI / (4 * theta));
+      
+      const x0 = 60, y0 = H - 40;
+      const xScale = (W - 100) / (kOpt * 1.5);
+      const yScale = (H - 80);
+      
+      // Axes
+      ctx.strokeStyle = '#334155';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(x0, 30);
+      ctx.lineTo(x0, y0);
+      ctx.lineTo(W - 30, y0);
+      ctx.stroke();
+      
+      // Labels
+      ctx.fillStyle = '#94a3b8';
+      ctx.font = '12px sans-serif';
+      ctx.fillText('P(success)', 5, 50);
+      ctx.fillText('迭代次数 k', W - 80, y0 + 25);
+      
+      // P = 1 line
+      ctx.strokeStyle = '#4b5563';
+      ctx.setLineDash([3, 3]);
+      ctx.beginPath();
+      ctx.moveTo(x0, y0 - yScale);
+      ctx.lineTo(W - 30, y0 - yScale);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle = '#4b5563';
+      ctx.font = '10px sans-serif';
+      ctx.fillText('1.0', x0 - 25, y0 - yScale + 3);
+      
+      // Probability curve
+      ctx.strokeStyle = '#6366f1';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      for (let k = 0; k <= kOpt * 1.5; k++) {
+        const angle = (2 * k + 1) * theta;
+        const P = Math.pow(Math.sin(angle), 2);
+        const x = x0 + k * xScale;
+        const y = y0 - P * yScale;
+        if (k === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      }
+      ctx.stroke();
+      
+      // Optimal point marker
+      const optAngle = (2 * kOpt + 1) * theta;
+      const optP = Math.pow(Math.sin(optAngle), 2);
+      const optX = x0 + kOpt * xScale;
+      const optY = y0 - optP * yScale;
+      
+      ctx.fillStyle = '#4ade80';
+      ctx.beginPath();
+      ctx.arc(optX, optY, 6, 0, 2 * Math.PI);
+      ctx.fill();
+      ctx.fillStyle = '#4ade80';
+      ctx.font = 'bold 11px sans-serif';
+      ctx.fillText(`k_opt = ${kOpt}`, optX + 10, optY - 10);
+      ctx.fillText(`P = ${(optP*100).toFixed(1)}%`, optX + 10, optY + 5);
+      
+      // k axis ticks
+      ctx.fillStyle = '#94a3b8';
+      ctx.font = '10px sans-serif';
+      for (let k = 0; k <= kOpt * 1.5; k += Math.floor(kOpt/4)) {
+        const x = x0 + k * xScale;
+        ctx.fillText(k.toString(), x - 5, y0 + 12);
+        ctx.beginPath();
+        ctx.moveTo(x, y0);
+        ctx.lineTo(x, y0 + 3);
+        ctx.stroke();
+      }
+      
+      // Title
+      ctx.fillStyle = '#94a3b8';
+      ctx.font = '12px sans-serif';
+      ctx.fillText(`N = ${N}, θ = 1/√N ≈ ${theta.toFixed(4)}`, 10, 20);
+    }
+
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'ArrowRight' || e.key === ' ') navigate(1);
+      else if (e.key === 'ArrowLeft') navigate(-1);
+    });
+    
+    document.addEventListener('DOMContentLoaded', function() {
+      if (typeof renderMathInElement === 'function') {
+        renderMathInElement(document.body, {
+          delimiters: [
+            {left: '$$', right: '$$', display: true},
+            {left: '$', right: '$', display: false}
+          ]
+        });
+      }
+    });
+  </script>
+</body>
+</html>

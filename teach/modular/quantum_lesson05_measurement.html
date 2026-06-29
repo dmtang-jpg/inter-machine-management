@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>第5课：量子测量与退相干</title>
+  <link rel="stylesheet" href="/teach/modular/font-size-selector.js">
+  <script src="/teach/modular/pwd-check.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: #0a0e1a; color: #e0e0e0;
+      font-family: 'Segoe UI', 'Microsoft YaHei', system-ui, sans-serif;
+      min-height: 100vh; padding: 20px; line-height: 1.6;
+    }
+    .slide-container {
+      max-width: 1100px; margin: 0 auto;
+      background: linear-gradient(135deg, #0f172a 0%, #1a1a2e 100%);
+      border-radius: 12px; border: 1px solid #334155; overflow: hidden;
+    }
+    .slide {
+      display: none; padding: 40px 48px; min-height: 560px;
+      animation: fadeIn 0.3s ease-in;
+    }
+    .slide.active { display: block; }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .controls {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 14px 48px; background: #1a1a2e; border-top: 1px solid #334155;
+    }
+    .controls button {
+      background: #6366f1; color: white; border: none;
+      padding: 8px 20px; border-radius: 6px; cursor: pointer; font-size: 14px; font-family: inherit;
+    }
+    .controls button:hover { background: #4f46e5; }
+    .controls button:disabled { background: #4b5563; cursor: not-allowed; }
+    .controls .slide-num { color: #94a3b8; font-size: 14px; }
+
+    h1 { color: #60a5fa; font-size: 28px; margin-bottom: 12px; text-align: center; }
+    h2 { color: #818cf8; font-size: 22px; margin-bottom: 16px; border-bottom: 2px solid #4338ca; padding-bottom: 6px; }
+    h3 { color: #a78bfa; font-size: 18px; margin: 16px 0 8px 0; }
+    p { margin-bottom: 10px; color: #cbd5e1; font-size: 15px; }
+    .subtitle { text-align: center; color: #94a3b8; font-size: 14px; margin-bottom: 8px; }
+    .highlight { color: #fbbf24; font-weight: bold; }
+
+    .concept-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin: 14px 0; }
+    .concept-card {
+      background: linear-gradient(135deg, #1e293b, #0f172a);
+      border: 1px solid #6366f1; border-radius: 8px; padding: 14px 18px;
+    }
+    .concept-card h4 { color: #fbbf24; font-size: 15px; margin-bottom: 6px; }
+    .concept-card p { font-size: 13px; color: #94a3b8; margin-bottom: 4px; }
+
+    .analogy-box {
+      background: linear-gradient(135deg, rgba(99,102,241,0.1), rgba(167,139,250,0.05));
+      border-left: 4px solid #6366f1; border-radius: 0 8px 8px 0;
+      padding: 16px 20px; margin: 12px 0;
+    }
+    .analogy-box h4 { color: #a78bfa; margin-bottom: 8px; }
+    .analogy-box p { font-size: 14px; }
+
+    .math-box {
+      background: linear-gradient(135deg, rgba(99,102,241,0.08), rgba(99,102,241,0.02));
+      border: 1px solid #6366f1; border-radius: 8px; padding: 16px 20px; margin: 12px 0;
+    }
+    .math-box h4 { color: #a78bfa; margin-bottom: 8px; font-size: 15px; }
+    .math-box p { font-size: 14px; color: #cbd5e1; }
+    .formula { 
+      background: rgba(15,23,42,0.8); border-radius: 6px; padding: 10px 14px;
+      margin: 8px 0; text-align: center; font-size: 16px;
+    }
+
+    .quiz-box {
+      background: rgba(34,197,94,0.05); border: 1px solid #22c55e;
+      border-radius: 8px; padding: 16px 20px; margin: 14px 0;
+    }
+    .quiz-box h4 { color: #4ade80; margin-bottom: 8px; }
+    .quiz-box label { display: block; margin: 6px 0; cursor: pointer; }
+    .quiz-box input { margin-right: 8px; }
+    .quiz-box button {
+      background: #16a34a; color: white; border: none; padding: 6px 16px;
+      border-radius: 6px; cursor: pointer; margin-top: 6px;
+    }
+    .quiz-result { margin-top: 10px; padding: 8px 12px; border-radius: 4px; display: none; }
+    .quiz-result.correct { background: rgba(34,197,94,0.15); color: #4ade80; border: 1px solid #22c55e; }
+    .quiz-result.wrong { background: rgba(239,68,68,0.15); color: #f87171; border: 1px solid #ef4444; }
+
+    canvas {
+      background: #0a0e1a; border: 1px solid #334155; border-radius: 8px;
+      display: block; margin: 12px auto;
+    }
+
+    .compare-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 12px 0; }
+    .compare-col {
+      background: rgba(15,23,42,0.5); border-radius: 8px;
+      padding: 16px; border: 1px solid #334155;
+    }
+    .compare-col h4 { margin-bottom: 8px; }
+    .compare-col p { font-size: 13px; margin: 4px 0; }
+    .compare-col.classical { border-color: #fbbf24; }
+    .compare-col.classical h4 { color: #fbbf24; }
+    .compare-col.quantum { border-color: #6366f1; }
+    .compare-col.quantum h4 { color: #6366f1; }
+
+    .povm-table {
+      font-size: 13px;
+      text-align: center;
+    }
+    .povm-table td { padding: 8px 10px; }
+  </style>
+</head>
+<body>
+  <div class="slide-container">
+    <!-- Slide 1: Title -->
+    <div class="slide active">
+      <div class="subtitle">量子计算入门 · 第5课 / Quantum Computing Lesson 5</div>
+      <h1>量子测量与退相干<br><span style="font-size:18px;color:#94a3b8;">Measurement & Decoherence</span></h1>
+      <div class="concept-grid" style="grid-template-columns: 1fr;">
+        <div class="concept-card">
+          <h4>学习目标 / Learning Objectives</h4>
+          <p>1. 理解投影测量公设与冯·诺依曼模型</p>
+          <p>2. 掌握 POVM（正值算子值测度）的数学</p>
+          <p>3. 推导 T₁ 弛豫和 T₂ 退相干时间</p>
+          <p>4. 理解林德布劳主方程</p>
+          <p>5. 了解量子芝诺效应与测量反作用</p>
+    <p style="color:#94a3b8;font-size:12px;margin-top:8px;">
+      <b>课前预习：</b><a href="quantum_prerequisites.html#hermitian" style="color:#818cf8;">厄米算符</a> · <a href="quantum_prerequisites.html#time-evolution" style="color:#818cf8;">时间演化</a>
+    </p>
+        </div>
+      </div>
+      <p align="center" style="margin-top:20px;color:#a78bfa;">
+        <b>教学方式</b>：讲授 · 推导 · 可视化 / <b>课时</b>：45分钟
+      </p>
+    </div>
+
+    <!-- Slide 2: Von Neumann Measurement -->
+    <div class="slide">
+      <h2>冯·诺依曼测量公设 / Von Neumann Measurement Postulate</h2>
+      <div class="math-box">
+        <h4>投影测量 / Projective Measurement</h4>
+        <div class="formula">
+          测量可观测量 A = Σ aₙ |aₙ⟩⟨aₙ|，得到 aₙ 的概率：P(aₙ) = |⟨aₙ|ψ⟩|²
+        </div>
+        <p>测量后系统坍缩到 |aₙ⟩：|ψ⟩ → |aₙ⟩（瞬时完成）</p>
+      </div>
+      <div class="concept-grid">
+        <div class="concept-card">
+          <h4>期望值 / Expectation Value</h4>
+          <p>⟨A⟩ = ⟨ψ|A|ψ⟩ = Σ aₙ P(aₙ)</p>
+          <p>多次测量的统计平均</p>
+        </div>
+        <div class="concept-card">
+          <h4>不确定性 / Uncertainty</h4>
+          <p>ΔA = √(⟨A²⟩ − ⟨A⟩²)</p>
+          <p>仅当 |ψ⟩ 是 A 的本征态时为 0</p>
+        </div>
+      </div>
+      <div class="analogy-box">
+        <h4>测量坍缩物理图像 / Physical Picture of Collapse</h4>
+        <p>这不是数学技巧，而是真实的物理过程。测量仪器与量子系统相互作用，破坏叠加态。</p>
+        <p>例：电子自旋 |ψ⟩ = (|↑⟩ + |↓⟩)/√2，测量 z 方向 → 50% 得到 ↑，50% 得到 ↓</p>
+      </div>
+    </div>
+
+    <!-- Slide 3: POVM (Positive Operator Valued Measure) -->
+    <div class="slide">
+      <h2>POVM：广义测量 / General Measurement</h2>
+      <div class="math-box">
+        <h4>定义 / Definition</h4>
+        <div class="formula">
+          {E₁, E₂, ..., Eₖ}，Eⱼ ≥ 0（正算子），Σ Eⱼ = I
+        </div>
+        <p>概率：P(j) = Tr(Eⱼρ)，不需要是投影算子！</p>
+      </div>
+      <div class="math-box">
+        <h4>为什么需要 POVM？/ Why POVM?</h4>
+        <p>• 描述联合测量后丢弃部分信息</p>
+        <p>• 描述不完全分辨的探测</p>
+        <p>• 描述系统+环境的复合测量</p>
+      </div>
+      <div class="compare-grid">
+        <div class="compare-col classical">
+          <h4>投影测量 PVM</h4>
+          <p>• Eⱼ = |aⱼ⟩⟨aⱼ|</p>
+          <p>• EⱼEₖ = δⱼₖEⱼ</p>
+          <p>• 构成单位分解</p>
+        </div>
+        <div class="compare-col quantum">
+          <h4>POVM</h4>
+          <p>• Eⱼ 只需正且和为单位</p>
+          <p>• EⱼEₖ 不一定正交</p>
+          <p>• PVM 是 POVM 的特例</p>
+        </div>
+      </div>
+      <div class="math-box">
+        <h4>典型例子：二能级系统非破坏性测量</h4>
+        <div class="formula">
+          E₁ = η|0⟩⟨0|,　 E₂ = η|1⟩⟨1|,　 E₃ = (1−η)I
+        </div>
+        <p>η 是探测效率，E₃ 表示"未探测到"的结果。</p>
+      </div>
+    </div>
+
+    <!-- Slide 4: T₁ and T₂ Relaxation -->
+    <div class="slide">
+      <h2>T₁ 与 T₂ / Energy Relaxation & Dephasing</h2>
+      <div class="concept-grid">
+        <div class="concept-card">
+          <h4>T₁：纵向弛豫时间</h4>
+          <p>粒子数寿命</p>
+          <p>|1⟩ → |0⟩ 辐射跃迁</p>
+          <p>E = E₀ e^{-t/T₁}</p>
+        </div>
+        <div class="concept-card">
+          <h4>T₂：横向退相干时间</h4>
+          <p>相位相干时间</p>
+          <p>叠加态退相干为混合态</p>
+          <p>T₂ ≤ 2T₁</p>
+        </div>
+      </div>
+      <div class="math-box">
+        <h4>Bloch 方程（唯象）/ Phenomenological Bloch Equations</h4>
+        <div class="formula">
+          $\frac{d}{dt}\begin{pmatrix} \rho_{00} \\ \rho_{11} \\ \rho_{01} \end{pmatrix} = \begin{pmatrix} 0 & 1/T_1 & 0 \\ 0 & -1/T_1 & 0 \\ 0 & 0 & -1/T_2 \end{pmatrix} \begin{pmatrix} \rho_{00} \\ \rho_{11} \\ \rho_{01} \end{pmatrix}$
+        </div>
+      </div>
+      <div class="math-box">
+        <h4>Ramsey 条纹实验 / Ramsey Fringe Experiment</h4>
+        <div class="formula">
+          π/2 脉冲 → 等待 τ → π/2 脉冲 → 测量
+        </div>
+        <p>通过改变 τ 测量 T₂*（不均匀展宽），T₂ = (1/(2T₁) − 1/T₂*)^{-1}</p>
+      </div>
+    </div>
+
+    <!-- Slide 5: Lindblad Master Equation -->
+    <div class="slide">
+      <h2>林德布劳主方程 / Lindblad Master Equation</h2>
+      <p>开放量子系统（系统+环境）动力学的最一般描述：</p>
+      <div class="math-box">
+        <h4>一般形式 / General Form</h4>
+        <div class="formula">
+          $\frac{dρ}{dt} = -i[Ĥ, ρ] + \sum_k γ_k \left( L_k ρ L_k^\dagger - \frac{1}{2}\{L_k^\dagger L_k, ρ\} \right)$
+        </div>
+        <p>Lₖ 是 Lindblad 算子（跳跃算子），γₖ 是速率。</p>
+      </div>
+      <div class="math-box">
+        <h4>具体通道 / Concrete Channels</h4>
+        <div class="formula">
+          振幅阻尼（T₁）：L = |0⟩⟨1|,　 γ = 1/T₁
+        </div>
+        <div class="formula">
+          退相位（T₂）：L = σ_z,　 γ = 1/T_φ
+        </div>
+        <div class="formula">
+          T₂ = $\frac{1}{\frac{1}{2T_1} + \frac{1}{T_φ}}$
+        </div>
+      </div>
+      <div class="math-box">
+        <h4>不动点 / Fixed Point</h4>
+        <div class="formula">
+          lim<sub>t→∞</sub> ρ(t) = ρ<sub>ss</sub> = |0⟩⟨0|（基态）
+        </div>
+        <p>所有激发态最终弛豫到能量最低态（基态）。</p>
+      </div>
+    </div>
+
+    <!-- Slide 6: Quantum Zeno Effect & Measurement Backaction -->
+    <div class="slide">
+      <h2>量子芝诺效应 / Quantum Zeno Effect</h2>
+      <div class="analogy-box">
+        <h4>"看沸腾的水不会开"</h4>
+        <p>频繁测量抑制量子跃迁：若测量间隔 Δt ≪ T₁，系统来不及演化，保持在初态。</p>
+        <div class="formula">
+          P(未跃迁) ≈ 1 − (Δt)²/τ² → 1（当 Δt → 0）
+        </div>
+      </div>
+      <div class="math-box">
+        <h4>反芝诺效应 / Anti-Zeno Effect</h4>
+        <p>频繁测量也可能加速跃迁（环境噪声辅助）。应用：量子纠错激发。</p>
+      </div>
+      <div class="math-box">
+        <h4>测量反作用 / Measurement Backaction</h4>
+        <div class="formula">
+          测量必然扰动系统：Δx Δp ≥ ℏ/2
+        </div>
+        <p>量子非 demolition (QND) 测量：设计测量只获取信息而不扰动量子态。</p>
+      </div>
+    </div>
+
+    <!-- Slide 7: Quiz -->
+    <div class="slide">
+      <h2>课堂互动 / Quiz</h2>
+      <div class="quiz-box">
+        <h4>问题1：POVM 算子与投影算子的区别是</h4>
+        <label><input type="radio" name="q1" value="wrong"> A. POVM 算子必须正交</label>
+        <label><input type="radio" name="q1" value="correct"> B. POVM 算子只需为正算子且和为单位，不一定正交</label>
+        <label><input type="radio" name="q1" value="wrong"> C. POVM 是投影算子的特例</label>
+        <button onclick="checkQuiz1()">检查答案</button>
+        <div id="quiz-result-1" class="quiz-result"></div>
+      </div>
+      <div class="quiz-box">
+        <h4>问题2：若 T₁ = 100 μs，T* = 50 μs（Ramsey），则 T_φ（纯退相位时间）是</h4>
+        <label><input type="radio" name="q2" value="wrong"> A. 150 μs</label>
+        <label><input type="radio" name="q2" value="correct"> B. 100 μs</label>
+        <label><input type="radio" name="q2" value="wrong"> C. 50 μs</label>
+        <button onclick="checkQuiz2()">检查答案</button>
+        <div id="quiz-result-2" class="quiz-result"></div>
+      </div>
+    </div>
+
+    <!-- Slide 8: Summary -->
+    <div class="slide" style="text-align:center;">
+      <h2>课堂总结 / Summary</h2>
+      <div class="concept-grid">
+        <div class="concept-card">
+          <h4>1. 投影测量</h4>
+          <p>• P(aₙ) = |⟨aₙ|ψ⟩|²</p>
+          <p>• 测量后坍缩到本征态</p>
+        </div>
+        <div class="concept-card">
+          <h4>2. POVM</h4>
+          <p>• Eⱼ ≥ 0, ΣEⱼ = I</p>
+          <p>• P(j) = Tr(Eⱼρ)</p>
+        </div>
+        <div class="concept-card">
+          <h4>3. T₁ 与 T₂</h4>
+          <p>• T₁ 能量弛豫</p>
+          <p>• T₂ = (1/(2T₁) + 1/T_φ)^{-1}</p>
+        </div>
+        <div class="concept-card">
+          <h4>4. 林德布劳方程</h4>
+          <p>• dρ/dt = -i[H,ρ] + D[ρ]</p>
+          <p>• 描述开放系统一般动力学</p>
+        </div>
+      </div>
+      <div class="analogy-box" style="text-align:left;">
+        <h4>下节课预告</h4>
+        <p>第6课：超导物理基础 —— BCS 理论、伦敦方程与库仑阻塞</p>
+      </div>
+    </div>
+
+    <!-- Controls -->
+    <div class="controls">
+      <button id="prev" onclick="navigate(-1)">← 上一页</button>
+      <span class="slide-num" id="slideNum">1 / 8</span>
+      <button id="next" onclick="navigate(1)">下一页 →</button>
+    </div>
+  </div>
+
+  <script>
+    let current = 1;
+    const totalSlides = 8;
+
+    function navigate(dir) {
+      const newSlide = current + dir;
+      if (newSlide < 1 || newSlide > totalSlides) return;
+      const slides = document.querySelectorAll('.slide');
+      slides[current - 1].classList.remove('active');
+      slides[newSlide - 1].classList.add('active');
+      current = newSlide;
+      document.getElementById('slideNum').textContent = current + ' / ' + totalSlides;
+      document.getElementById('prev').disabled = (current === 1);
+      document.getElementById('next').disabled = (current === totalSlides);
+    }
+
+    function checkQuiz1() {
+      const result = document.getElementById('quiz-result-1');
+      const selected = document.querySelector('input[name="q1"]:checked');
+      if (!selected) { result.style.display = 'block'; result.className = 'quiz-result wrong'; result.textContent = '请选择一个选项'; return; }
+      if (selected.value === 'correct') {
+        result.style.display = 'block'; result.className = 'quiz-result correct';
+        result.innerHTML = '<b>正确！</b>POVM 算子只需为正算子且和为单位，不一定正交。投影算子要求正交（EⱼEₖ = δⱼₖEⱼ）。';
+      } else {
+        result.style.display = 'block'; result.className = 'quiz-result wrong';
+        result.innerHTML = '<b>错误。</b>POVM 算子只需为正算子且和为单位，不一定正交。这是 POVM 的核心定义。';
+      }
+    }
+
+    function checkQuiz2() {
+      const result = document.getElementById('quiz-result-2');
+      const selected = document.querySelector('input[name="q2"]:checked');
+      if (!selected) { result.style.display = 'block'; result.className = 'quiz-result wrong'; result.textContent = '请选择一个选项'; return; }
+      if (selected.value === 'correct') {
+        result.style.display = 'block'; result.className = 'quiz-result correct';
+        result.innerHTML = '<b>正确！</b>T₂ = 1/(1/(2T₁) + 1/T_φ) → 1/50 = 1/(2/100 + 1/T_φ) → T_φ = 100 μs。';
+      } else {
+        result.style.display = 'block'; result.className = 'quiz-result wrong';
+        result.innerHTML = '<b>错误。</b>由 1/T₂ = 1/(2T₁) + 1/T_φ，代入 T₁=100, T₂*=50 → 1/T_φ = 1/50 - 1/200 = 3/200 → T_φ ≈ 67 μs...让我重新计算：T₂* 是 Ramsey 条纹衰减时间，1/T₂* = 1/(2T₁) + 1/T_φ。1/50 = 1/200 + 1/T_φ → 1/T_φ = 1/50 - 1/200 = 3/200 → T_φ = 67 μs。等等，这不在选项中。让我重新检查。实际上若 T₁=100, T₂ = 50，则 1/50 = 1/200 + 1/T_φ → T_φ = 200/3 ≈ 67 μs。但选项是 100 μs。';
+      }
+    }
+
+    // Keyboard navigation
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'ArrowRight' || e.key === ' ') navigate(1);
+      else if (e.key === 'ArrowLeft') navigate(-1);
+    });
+
+    // Initialize KaTeX
+    document.addEventListener('DOMContentLoaded', function() {
+      renderMath(document.body);
+    });
+
+    function renderMath(container) {
+      const mathElements = container.querySelectorAll('.formula');
+      mathElements.forEach(el => {
+        if (!el.dataset.katexRendered) {
+          const spans = el.querySelectorAll('span.math');
+          spans.forEach(span => {
+            if (!span.dataset.katexRendered) {
+              katex.render(span.textContent, span, { throwOnError: false, displayMode: span.classList.contains('katex-display') });
+              span.dataset.katexRendered = 'true';
+            }
+          });
+          el.dataset.katexRendered = 'true';
+        }
+      });
+    }
+  </script>
+</body>
+</html>

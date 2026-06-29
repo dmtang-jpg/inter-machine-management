@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>第3课：量子纠缠与贝尔不等式</title>
+  <link rel="stylesheet" href="/teach/modular/font-size-selector.js">
+  <script src="/teach/modular/pwd-check.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: #0a0e1a;
+      color: #e0e0e0;
+      font-family: 'Segoe UI', 'Microsoft YaHei', system-ui, sans-serif;
+      min-height: 100vh;
+      padding: 20px;
+      line-height: 1.6;
+    }
+    .slide-container {
+      max-width: 1100px;
+      margin: 0 auto;
+      background: linear-gradient(135deg, #0f172a 0%, #1a1a2e 100%);
+      border-radius: 12px;
+      border: 1px solid #334155;
+      overflow: hidden;
+    }
+    .slide {
+      display: none;
+      padding: 40px 48px;
+      min-height: 560px;
+      animation: fadeIn 0.3s ease-in;
+    }
+    .slide.active { display: block; }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .controls {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 14px 48px;
+      background: #1a1a2e;
+      border-top: 1px solid #334155;
+    }
+    .controls button {
+      background: #6366f1;
+      color: white;
+      border: none;
+      padding: 8px 20px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      font-family: inherit;
+    }
+    .controls button:hover { background: #4f46e5; }
+    .controls button:disabled { background: #4b5563; cursor: not-allowed; }
+    .controls .slide-num { color: #94a3b8; font-size: 14px; }
+
+    h1 { color: #60a5fa; font-size: 28px; margin-bottom: 12px; text-align: center; }
+    h2 { color: #818cf8; font-size: 22px; margin-bottom: 16px; border-bottom: 2px solid #4338ca; padding-bottom: 6px; }
+    h3 { color: #a78bfa; font-size: 18px; margin: 16px 0 8px 0; }
+    p { margin-bottom: 10px; color: #cbd5e1; font-size: 15px; }
+    .subtitle { text-align: center; color: #94a3b8; font-size: 14px; margin-bottom: 8px; }
+
+    .concept-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin: 14px 0; }
+    .concept-card {
+      background: linear-gradient(135deg, #1e293b, #0f172a);
+      border: 1px solid #6366f1;
+      border-radius: 8px;
+      padding: 14px 18px;
+    }
+    .concept-card h4 { color: #fbbf24; font-size: 15px; margin-bottom: 6px; }
+    .concept-card p { font-size: 13px; color: #94a3b8; margin-bottom: 4px; }
+    .highlight { color: #fbbf24; font-weight: bold; }
+
+    .analogy-box {
+      background: linear-gradient(135deg, rgba(99,102,241,0.1), rgba(167,139,250,0.05));
+      border-left: 4px solid #6366f1;
+      border-radius: 0 8px 8px 0;
+      padding: 16px 20px;
+      margin: 12px 0;
+    }
+    .analogy-box h4 { color: #a78bfa; margin-bottom: 8px; }
+    .analogy-box p { font-size: 14px; }
+
+    .math-box {
+      background: linear-gradient(135deg, rgba(99,102,241,0.08), rgba(99,102,241,0.02));
+      border: 1px solid #6366f1;
+      border-radius: 8px;
+      padding: 16px 20px;
+      margin: 12px 0;
+    }
+    .math-box h4 { color: #a78bfa; margin-bottom: 8px; font-size: 15px; }
+    .math-box p { font-size: 14px; color: #cbd5e1; }
+    .formula { 
+      background: rgba(15,23,42,0.8); 
+      border-radius: 6px; 
+      padding: 10px 14px; 
+      margin: 8px 0; 
+      text-align: center;
+      font-size: 16px;
+    }
+
+    table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 14px; }
+    th { background: #1e293b; color: #fbbf24; padding: 10px 14px; text-align: left; border: 1px solid #334155; }
+    td { background: rgba(15,23,42,0.6); color: #cbd5e1; padding: 10px 14px; border: 1px solid #334155; }
+    tr:hover td { background: rgba(99,102,241,0.1); }
+
+    .quiz-box {
+      background: rgba(34,197,94,0.05);
+      border: 1px solid #22c55e;
+      border-radius: 8px;
+      padding: 16px 20px;
+      margin: 14px 0;
+    }
+    .quiz-box h4 { color: #4ade80; margin-bottom: 8px; }
+    .quiz-box label { display: block; margin: 6px 0; cursor: pointer; }
+    .quiz-box input { margin-right: 8px; }
+    .quiz-box button {
+      background: #16a34a; color: white; border: none; padding: 6px 16px;
+      border-radius: 6px; cursor: pointer; margin-top: 6px;
+    }
+    .quiz-result { margin-top: 10px; padding: 8px 12px; border-radius: 4px; display: none; }
+    .quiz-result.correct { background: rgba(34,197,94,0.15); color: #4ade80; border: 1px solid #22c55e; }
+    .quiz-result.wrong { background: rgba(239,68,68,0.15); color: #f87171; border: 1px solid #ef4444; }
+
+    canvas {
+      background: #0a0e1a;
+      border: 1px solid #334155;
+      border-radius: 8px;
+      display: block;
+      margin: 12px auto;
+    }
+
+    .compare-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 12px 0; }
+    .compare-col {
+      background: rgba(15,23,42,0.5);
+      border-radius: 8px;
+      padding: 16px;
+      border: 1px solid #334155;
+    }
+    .compare-col h4 { margin-bottom: 8px; }
+    .compare-col p { font-size: 13px; margin: 4px 0; }
+    .compare-col.classical { border-color: #fbbf24; }
+    .compare-col.classical h4 { color: #fbbf24; }
+    .compare-col.quantum { border-color: #6366f1; }
+    .compare-col.quantum h4 { color: #6366f1; }
+
+    .bell-state-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin: 12px 0;
+    }
+    .bell-state {
+      background: rgba(15,23,42,0.6);
+      border: 1px solid #6366f1;
+      border-radius: 8px;
+      padding: 12px;
+      text-align: center;
+    }
+    .bell-state .name { color: #fbbf24; font-size: 14px; margin-bottom: 4px; }
+    .bell-state .expr { color: #a78bfa; font-family: 'Courier New', monospace; font-size: 13px; }
+
+    .chsh-table {
+      font-size: 13px;
+    }
+    .chsh-table td { text-align: center; }
+    .chsh-table .highlight-cell { background: rgba(99,102,241,0.2); }
+  </style>
+</head>
+<body>
+  <div class="slide-container">
+    <!-- Slide 1: Title -->
+    <div class="slide active">
+      <div class="subtitle">量子计算入门 · 第3课 / Quantum Computing Lesson 3</div>
+      <h1>电子的量子特性（下）<br><span style="font-size:18px;color:#94a3b8;">量子纠缠与贝尔不等式</span></h1>
+      <div class="concept-grid" style="grid-template-columns: 1fr;">
+        <div class="concept-card">
+          <h4>学习目标 / Learning Objectives</h4>
+          <p>1. 理解量子纠缠的本质（不是经典关联）</p>
+          <p>2. 掌握四个贝尔态的推导与性质</p>
+          <p>3. 理解CHSH不等式及其违反</p>
+          <p>4. 掌握密度矩阵与混合态描述</p>
+          <p>5. 理解 n 个量子比特 = 2ⁿ 个态</p>
+    <p style="color:#94a3b8;font-size:12px;margin-top:8px;">
+      <b>课前预习：</b><a href="quantum_prerequisites.html#complex" style="color:#818cf8;">复数与欧拉公式</a> · <a href="quantum_prerequisites.html#hermitian" style="color:#818cf8;">厄米算符</a>
+    </p>
+        </div>
+      </div>
+      <p align="center" style="margin-top:20px;color:#a78bfa;">
+        <b>教学方式</b>：讲授 · 推导 · 互动问答 / <b>课时</b>：45分钟
+      </p>
+    </div>
+
+    <!-- Slide 2: Quantum Entanglement vs Classical Correlation -->
+    <div class="slide">
+      <h2>量子纠缠 vs 经典关联 / Entanglement vs Classical Correlation</h2>
+      <div class="compare-grid">
+        <div class="compare-col classical">
+          <h4>经典关联（手套盒子）</h4>
+          <p>• 分开时已确定</p>
+          <p>• 只是我们不知道</p>
+          <p>• 打开一盒→知道另一盒</p>
+          <p>• 信息已存在</p>
+        </div>
+        <div class="compare-col quantum">
+          <h4>量子纠缠</h4>
+          <p>• 测量前真的未确定</p>
+          <p>• 贝尔不等式实验证实</p>
+          <p>• 测量A→B立即确定</p>
+          <p>• 信息在测量时产生</p>
+        </div>
+      </div>
+      <div class="analogy-box">
+        <h4>关键区分</h4>
+        <p>经典关联 = 结果在分开时已确定，只是你不知道。</p>
+        <p>量子纠缠 = 结果在测量前真的未确定。贝尔不等式实验已反复证实。</p>
+      </div>
+    </div>
+
+    <!-- Slide 3: Bell States -->
+    <div class="slide">
+      <h2>四个贝尔态 / The Four Bell States</h2>
+      <p>两量子比特系统的最大纠缠态（贝尔态）是 ℂ⁴ 空间的一组正交归一基：</p>
+      <div class="math-box">
+        <h4>贝尔基 / Bell Basis</h4>
+        <div class="bell-state-grid">
+          <div class="bell-state">
+            <div class="name">|Φ⁺⟩</div>
+            <div class="expr">(|00⟩ + |11⟩)/√2</div>
+          </div>
+          <div class="bell-state">
+            <div class="name">|Φ⁻⟩</div>
+            <div class="expr">(|00⟩ − |11⟩)/√2</div>
+          </div>
+          <div class="bell-state">
+            <div class="name">|Ψ⁺⟩</div>
+            <div class="expr">(|01⟩ + |10⟩)/√2</div>
+          </div>
+          <div class="bell-state">
+            <div class="name">|Ψ⁻⟩</div>
+            <div class="expr">(|01⟩ − |10⟩)/√2</div>
+          </div>
+        </div>
+      </div>
+      <div class="math-box">
+        <h4>纠缠性质 / Entanglement Properties</h4>
+        <div class="formula">
+          |Φ⁺⟩ = (|↑↑⟩ + |↓↓⟩)/√2
+        </div>
+        <p>• <b>完美关联</b>：测量 A 得到 |0⟩，B 必定是 |0⟩；测量 A 得到 |1⟩，B 必定是 |1⟩</p>
+        <p>• <b>不可分离</b>：不存在单量子比特态 |α⟩, |β⟩ 使得 |Φ⁺⟩ = |α⟩ ⊗ |β⟩</p>
+        <p>• <b>最大纠缠</b>：约化密度矩阵 ρ_A = I/2（最大混合态）</p>
+      </div>
+    </div>
+
+    <!-- Slide 4: EPR Paradox -->
+    <div class="slide">
+      <h2>EPR 佯谬 / Einstein-Podolsky-Rosen Paradox</h2>
+      <div class="analogy-box">
+        <h4>EPR 论证 (1935)</h4>
+        <p>1. 两个粒子相互作用后分离，处于纠缠态（如 |Φ⁺⟩）</p>
+        <p>2. 测量粒子1的位置，可以推断粒子2的位置</p>
+        <p>3. 测量粒子1的动量，可以推断粒子2的动量</p>
+        <p>4. 但粒子1的位置和动量不可能同时确定（不确定性原理）</p>
+        <p>5. 所以粒子2的位置和动量必须同时是"物理实在"的</p>
+        <p>6. 但量子力学说它们不是同时确定的</p>
+        <p>7. <b>结论</b>：量子力学是不完备的（存在隐藏变量）</p>
+      </div>
+      <div class="concept-grid">
+        <div class="concept-card">
+          <h4>爱因斯坦的立场</h4>
+          <p>• 存在隐藏变量</p>
+          <p>• 量子力学不完备</p>
+          <p>• "上帝不掷骰子"</p>
+        </div>
+        <div class="concept-card">
+          <h4>玻尔的回应</h4>
+          <p>• 不存在隐藏变量</p>
+          <p>• 测量前真的未确定</p>
+          <p>• 量子力学是完备的</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 5: CHSH Inequality -->
+    <div class="slide">
+      <h2>CHSH 不等式 / CHSH Inequality</h2>
+      <p>贝尔不等式的一种形式（CHSH, 1969），可以实验检验：</p>
+      <div class="math-box">
+        <h4>CHSH 关联函数 / CHSH Correlation Function</h4>
+        <div class="formula">
+          S = E(a,b) − E(a,b') + E(a',b) + E(a',b')
+        </div>
+        <p>其中 E(a,b) = P(相同) − P(不同)，是测量方向 a 和 b 的关联函数。</p>
+      </div>
+      <div class="math-box">
+        <h4>隐变量理论的界限 / Hidden Variable Bound</h4>
+        <div class="formula">
+          |S| ≤ 2
+        </div>
+        <p>任何局域隐变量理论都满足这个不等式！</p>
+      </div>
+      <div class="math-box">
+        <h4>量子力学的预测 / Quantum Mechanical Prediction</h4>
+        <div class="formula">
+          |S<sub>QM</sub>| = 2√2 ≈ 2.828 > 2
+        </div>
+        <p>对于 |Ψ⁻⟩ 态，选择特定角度：a=0°, a'=45°, b=22.5°, b'=67.5°</p>
+      </div>
+      <table class="chsh-table">
+        <tr><th>测量对</th><th>角度差</th><th>E 值</th></tr>
+        <tr><td>(a, b)</td><td>22.5°</td><td>−1/√2</td></tr>
+        <tr><td>(a, b')</td><td>67.5°</td><td>1/√2</td></tr>
+        <tr><td>(a', b)</td><td>22.5°</td><td>−1/√2</td></tr>
+        <tr><td>(a', b')</td><td>22.5°</td><td>−1/√2</td></tr>
+        <tr class="highlight-cell"><td><b>S =</b></td><td></td><td><b>−2√2</b></td></tr>
+      </table>
+    </div>
+
+    <!-- Slide 6: Density Matrix -->
+    <div class="slide">
+      <h2>密度矩阵 / Density Matrix</h2>
+      <p>对于混合态（统计混合），需要用密度矩阵描述：</p>
+      <div class="math-box">
+        <h4>纯态 vs 混合态 / Pure State vs Mixed State</h4>
+        <div class="formula">
+          纯态：ρ = |ψ⟩⟨ψ|,　 Tr(ρ²) = 1
+        </div>
+        <div class="formula">
+          混合态：ρ = Σ pᵢ |ψᵢ⟩⟨ψᵢ|,　 Tr(ρ²) < 1
+        </div>
+      </div>
+      <div class="math-box">
+        <h4>约化密度矩阵 / Reduced Density Matrix</h4>
+        <div class="formula">
+          ρ<sub>A</sub> = Tr<sub>B</sub>(ρ<sub>AB</sub>)
+        </div>
+        <p>对于 |Φ⁺⟩ = (|00⟩ + |11⟩)/√2：</p>
+        <div class="formula">
+          ρ<sub>A</sub> = Tr<sub>B</sub>(|Φ⁺⟩⟨Φ⁺|) = (⟨0|0⟩⟨0|0⟩ + ⟨1|1⟩⟨1|1⟩)/2 = I/2
+        </div>
+        <p>约化密度矩阵是最大混合态 → 说明子系统 A 与 B 最大纠缠！</p>
+      </div>
+      <div class="concept-grid">
+        <div class="concept-card">
+          <h4>纠缠判据 / Entanglement Criterion</h4>
+          <p>部分转置判据（Peres-Horodecki）：</p>
+          <p>若 ρ<sup>T_A</sup> 有负本征值 → 纠缠</p>
+        </div>
+        <div class="concept-card">
+          <h4>纠缠熵 / Entanglement Entropy</h4>
+          <p>S(ρ<sub>A</sub>) = −Tr(ρ<sub>A</sub> log ρ<sub>A</sub>)</p>
+          <p>对于 |Φ⁺⟩：S = log 2 = 1</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 7: Bell Inequality Experiment -->
+    <div class="slide">
+      <h2>贝尔不等式实验 / Bell Inequality Experiments</h2>
+      <div class="concept-grid">
+        <div class="concept-card">
+          <h4>实验证实</h4>
+          <p>• 阿斯佩实验 (1982)：首次验证</p>
+          <p>• 所有实验都支持量子力学</p>
+          <p>• 纠缠态的结果真的未确定</p>
+        </div>
+        <div class="concept-card">
+          <h4>漏洞关闭</h4>
+          <p>• 局域性漏洞 (2015)</p>
+          <p>• 检测效率漏洞</p>
+          <p>• 自由意志漏洞</p>
+        </div>
+      </div>
+      <div class="analogy-box">
+        <h4>实验意义</h4>
+        <p>贝尔不等式实验排除了<strong>局部隐变量理论</strong>。</p>
+        <p>量子力学是非局域的（nonlocal）——纠缠粒子间的关联不受距离限制。</p>
+      </div>
+    </div>
+
+    <!-- Slide 8: Why n Qubits = 2^n States -->
+    <div class="slide">
+      <h2>为什么 n 个量子比特 = 2ⁿ 个态</h2>
+      <div class="analogy-box">
+        <h4>类比：走迷宫</h4>
+        <p>经典计算机像一个人走迷宫——一次只能走一条路。</p>
+        <p>量子计算机像 2^N 个分身同时探索每条岔路。</p>
+      </div>
+      <div class="math-box">
+        <h4>严格推导 / Rigorous Derivation</h4>
+        <div class="formula">
+          |ψ⟩ = Σ<sub>x∈{0,1}<sup>n</sup></sub> c<sub>x</sub> |x⟩,　 Σ |c<sub>x</sub>|² = 1
+        </div>
+        <p>n 个量子比特的一般态是 2ⁿ 个基态的线性叠加。</p>
+        <p>存储所有概率幅需要 2ⁿ 个复数（忽略归一化）。</p>
+      </div>
+      <div class="concept-grid">
+        <div class="concept-card">
+          <h4>经典存储</h4>
+          <p>n 比特 → n 个经典位</p>
+          <p>只能存储 1 个 n 位二进制串</p>
+        </div>
+        <div class="concept-card">
+          <h4>量子存储</h4>
+          <p>n 量子比特 → 2ⁿ 个复数</p>
+          <p>可以同时处于 2ⁿ 个态的叠加</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 9: Quiz -->
+    <div class="slide">
+      <h2>课堂互动：辨析题</h2>
+      <div class="quiz-box">
+        <h4>问题1：两副手套分进两盒，打开一盒看到左手，另一盒是</h4>
+        <label><input type="radio" name="q1" value="correct"> A. 一定是右手（经典关联）</label>
+        <label><input type="radio" name="q1" value="wrong"> B. 可能是左手或右手（量子纠缠）</label>
+        <button onclick="checkQuiz1()">检查答案</button>
+        <div id="quiz-result-1" class="quiz-result"></div>
+      </div>
+      <div class="quiz-box">
+        <h4>问题2：如果两个量子比特处于纠缠态，测量其中一个，另一个会</h4>
+        <label><input type="radio" name="q2" value="correct"> A. 立即确定（量子纠缠）</label>
+        <label><input type="radio" name="q2" value="wrong"> B. 保持叠加态</label>
+        <button onclick="checkQuiz2()">检查答案</button>
+        <div id="quiz-result-2" class="quiz-result"></div>
+      </div>
+      <div class="quiz-box">
+        <h4>问题3：CHSH 不等式 |S| ≤ 2 是什么理论的界限？</h4>
+        <label><input type="radio" name="q3" value="wrong"> A. 量子力学</label>
+        <label><input type="radio" name="q3" value="correct"> B. 局部隐变量理论</label>
+        <label><input type="radio" name="q3" value="wrong"> C. 相对论</label>
+        <button onclick="checkQuiz3()">检查答案</button>
+        <div id="quiz-result-3" class="quiz-result"></div>
+      </div>
+    </div>
+
+    <!-- Slide 10: Summary -->
+    <div class="slide" style="text-align:center;">
+      <h2>课堂总结 / Summary</h2>
+      <div class="concept-grid">
+        <div class="concept-card">
+          <h4>1. 纠缠 ≠ 经典关联</h4>
+          <p>• 手套盒子 vs 量子纠缠</p>
+          <p>• 测量前真的未确定</p>
+        </div>
+        <div class="concept-card">
+          <h4>2. 四个贝尔态</h4>
+          <p>• |Φ⁺⟩, |Φ⁻⟩, |Ψ⁺⟩, |Ψ⁻⟩</p>
+          <p>• 最大纠缠，不可分离</p>
+        </div>
+        <div class="concept-card">
+          <h4>3. CHSH 不等式</h4>
+          <p>• 经典：|S| ≤ 2</p>
+          <p>• 量子：|S| = 2√2</p>
+        </div>
+        <div class="concept-card">
+          <h4>4. 密度矩阵</h4>
+          <p>• ρ = Σ pᵢ|ψᵢ⟩⟨ψᵢ|</p>
+          <p>• 约化密度矩阵判据</p>
+        </div>
+      </div>
+      <div class="analogy-box" style="text-align:left;">
+        <h4>下节课预告</h4>
+        <p>第4课：量子隧穿——WKB近似与约瑟夫森效应</p>
+        <p>我们将推导：粒子如何穿透势垒？约瑟夫森结如何工作？</p>
+      </div>
+    </div>
+
+    <!-- Controls -->
+    <div class="controls">
+      <button id="prev" onclick="navigate(-1)">← 上一页</button>
+      <span class="slide-num" id="slideNum">1 / 10</span>
+      <button id="next" onclick="navigate(1)">下一页 →</button>
+    </div>
+  </div>
+
+  <script>
+    let current = 1;
+    const total = 10;
+
+    function navigate(dir) {
+      const newSlide = current + dir;
+      if (newSlide < 1 || newSlide > total) return;
+      const slides = document.querySelectorAll('.slide');
+      slides[current - 1].classList.remove('active');
+      slides[newSlide - 1].classList.add('active');
+      current = newSlide;
+      document.getElementById('slideNum').textContent = current + ' / ' + total;
+      document.getElementById('prev').disabled = (current === 1);
+      document.getElementById('next').disabled = (current === total);
+    }
+
+    function checkQuiz1() {
+      const result = document.getElementById('quiz-result-1');
+      const selected = document.querySelector('input[name="q1"]:checked');
+      if (!selected) { result.style.display = 'block'; result.className = 'quiz-result wrong'; result.textContent = '请选择一个选项'; return; }
+      if (selected.value === 'correct') {
+        result.style.display = 'block'; result.className = 'quiz-result correct';
+        result.innerHTML = '<b>正确！</b>经典关联中，手套在分开时已确定，只是我们不知道。打开一盒看到左手，另一盒一定是右手。';
+      } else {
+        result.style.display = 'block'; result.className = 'quiz-result wrong';
+        result.innerHTML = '<b>错误。</b>经典关联中，手套在分开时已确定，只是我们不知道。打开一盒看到左手，另一盒一定是右手。';
+      }
+    }
+
+    function checkQuiz2() {
+      const result = document.getElementById('quiz-result-2');
+      const selected = document.querySelector('input[name="q2"]:checked');
+      if (!selected) { result.style.display = 'block'; result.className = 'quiz-result wrong'; result.textContent = '请选择一个选项'; return; }
+      if (selected.value === 'correct') {
+        result.style.display = 'block'; result.className = 'quiz-result correct';
+        result.innerHTML = '<b>正确！</b>纠缠态中，测量A的那一瞬间，B的状态跟着确定。';
+      } else {
+        result.style.display = 'block'; result.className = 'quiz-result wrong';
+        result.innerHTML = '<b>错误。</b>纠缠态中，测量A的那一瞬间，B的状态跟着确定。';
+      }
+    }
+
+    function checkQuiz3() {
+      const result = document.getElementById('quiz-result-3');
+      const selected = document.querySelector('input[name="q3"]:checked');
+      if (!selected) { result.style.display = 'block'; result.className = 'quiz-result wrong'; result.textContent = '请选择一个选项'; return; }
+      if (selected.value === 'correct') {
+        result.style.display = 'block'; result.className = 'quiz-result correct';
+        result.innerHTML = '<b>正确！</b>|S| ≤ 2 是局部隐变量理论的界限。量子力学可以达到 2√2。';
+      } else {
+        result.style.display = 'block'; result.className = 'quiz-result wrong';
+        result.innerHTML = '<b>错误。</b>|S| ≤ 2 是局部隐变量理论的界限，不是量子力学的界限。';
+      }
+    }
+
+    // Keyboard navigation
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'ArrowRight' || e.key === ' ') navigate(1);
+      else if (e.key === 'ArrowLeft') navigate(-1);
+    });
+
+    // Initialize KaTeX
+    document.addEventListener('DOMContentLoaded', function() {
+      renderMath(document.body);
+    });
+
+    function renderMath(container) {
+      const mathElements = container.querySelectorAll('.formula');
+      mathElements.forEach(el => {
+        if (!el.dataset.katexRendered) {
+          const spans = el.querySelectorAll('span.math');
+          spans.forEach(span => {
+            if (!span.dataset.katexRendered) {
+              katex.render(span.textContent, span, { throwOnError: false, displayMode: span.classList.contains('katex-display') });
+              span.dataset.katexRendered = 'true';
+            }
+          });
+          el.dataset.katexRendered = 'true';
+        }
+      });
+    }
+  </script>
+</body>
+</html>

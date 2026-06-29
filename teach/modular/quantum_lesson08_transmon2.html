@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>第8课：Transmon电路（续）— 参数优化与读出</title>
+  <link rel="stylesheet" href="/teach/modular/font-size-selector.js">
+  <script src="/teach/modular/pwd-check.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: #0a0e1a; color: #e0e0e0; font-family: 'Segoe UI', 'Microsoft YaHei', system-ui, sans-serif; min-height: 100vh; padding: 20px; line-height: 1.6; }
+    .slide-container { max-width: 1100px; margin: 0 auto; background: linear-gradient(135deg, #0f172a, #1a1a2e); border-radius: 12px; border: 1px solid #334155; overflow: hidden; }
+    .slide { display: none; padding: 40px 48px; min-height: 560px; animation: fadeIn 0.3s ease-in; }
+    .slide.active { display: block; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    .controls { display: flex; justify-content: space-between; align-items: center; padding: 14px 48px; background: #1a1a2e; border-top: 1px solid #334155; }
+    .controls button { background: #6366f1; color: white; border: none; padding: 8px 20px; border-radius: 6px; cursor: pointer; font-size: 14px; }
+    .controls button:hover { background: #4f46e5; }
+    .controls button:disabled { background: #4b5563; cursor: not-allowed; }
+    .controls .slide-num { color: #94a3b8; font-size: 14px; }
+    h1 { color: #60a5fa; font-size: 28px; text-align: center; margin-bottom: 12px; }
+    h2 { color: #818cf8; font-size: 22px; margin-bottom: 16px; border-bottom: 2px solid #4338ca; padding-bottom: 6px; }
+    h3 { color: #a78bfa; font-size: 18px; margin: 16px 0 8px 0; }
+    p { margin-bottom: 10px; color: #cbd5e1; font-size: 15px; }
+    .subtitle { text-align: center; color: #94a3b8; font-size: 14px; margin-bottom: 8px; }
+    .concept-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin: 14px 0; }
+    .concept-card { background: linear-gradient(135deg, #1e293b, #0f172a); border: 1px solid #6366f1; border-radius: 8px; padding: 14px 18px; }
+    .concept-card h4 { color: #fbbf24; font-size: 15px; margin-bottom: 6px; }
+    .concept-card p { font-size: 13px; color: #94a3b8; margin-bottom: 4px; }
+    .analogy-box { background: linear-gradient(135deg, rgba(99,102,241,0.1), rgba(167,139,250,0.05)); border-left: 4px solid #6366f1; padding: 16px 20px; margin: 12px 0; }
+    .analogy-box h4 { color: #a78bfa; margin-bottom: 8px; }
+    .math-box { background: linear-gradient(135deg, rgba(99,102,241,0.08), rgba(99,102,241,0.02)); border: 1px solid #6366f1; border-radius: 8px; padding: 16px 20px; margin: 12px 0; }
+    .math-box h4 { color: #a78bfa; margin-bottom: 8px; font-size: 15px; }
+    .formula { background: rgba(15,23,42,0.8); border-radius: 6px; padding: 10px 14px; margin: 8px 0; text-align: center; font-size: 16px; }
+    table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 14px; }
+    th { background: #1e293b; color: #fbbf24; padding: 10px 14px; text-align: left; border: 1px solid #334155; }
+    td { background: rgba(15,23,42,0.6); color: #cbd5e1; padding: 10px 14px; border: 1px solid #334155; }
+    canvas { background: #0a0e1a; border: 1px solid #334155; border-radius: 8px; display: block; margin: 12px auto; }
+    .quiz-box { background: rgba(34,197,94,0.05); border: 1px solid #22c55e; border-radius: 8px; padding: 16px 20px; margin: 14px 0; }
+    .quiz-box h4 { color: #4ade80; margin-bottom: 8px; }
+    .quiz-box label { display: block; margin: 6px 0; cursor: pointer; }
+    .quiz-box input { margin-right: 8px; }
+    .quiz-result { margin-top: 10px; padding: 8px 12px; border-radius: 4px; display: none; }
+    .quiz-result.correct { background: rgba(34,197,94,0.15); color: #4ade80; border: 1px solid #22c55e; }
+    .quiz-result.wrong { background: rgba(239,68,68,0.15); color: #f87171; border: 1px solid #ef4444; }
+    .derivation-step { background: rgba(99,102,241,0.05); border-left: 3px solid #6366f1; padding: 8px 14px; margin: 6px 0; font-size: 14px; }
+  </style>
+</head>
+<body>
+  <div class="slide-container">
+    <!-- Slide 1: Title -->
+    <div class="slide active">
+      <div class="subtitle">量子计算入门 · 第8课 / Quantum Computing Lesson 8</div>
+      <h1>Transmon电路（续）<br><span style="font-size:18px;color:#94a3b8;">参数优化、读出链路与改进设计</span></h1>
+      <div class="concept-grid" style="grid-template-columns: 1fr;">
+        <div class="concept-card">
+          <h4>学习目标 / Learning Objectives</h4>
+          <p>1. 掌握Transmon参数优化（E_J/E_C比的选择）</p>
+          <p>2. 推导色散读出相互作用哈密顿量</p>
+          <p>3. 理解T₁限制因素与Purcell效应</p>
+          <p>4. 了解Transmon改进版本（Xmon, Fluxonium, 0-π）</p>
+          <p>5. 掌握Transmon设计计算方法</p>
+    <p style="color:#94a3b8;font-size:12px;margin-top:8px;">
+      <b>课前预习：</b><a href="quantum_prerequisites.html#qho" style="color:#818cf8;">量子谐振子</a> · <a href="quantum_prerequisites.html#rabi" style="color:#818cf8;">Rabi振荡</a> · <a href="quantum_prerequisites.html#time-evolution" style="color:#818cf8;">时间演化</a>
+    </p>
+        </div>
+      </div>
+      <p align="center" style="margin-top:20px;color:#a78bfa;"><b>教学方式</b>：讲授 · 推导 · 练习 / <b>课时</b>：45分钟</p>
+    </div>
+
+    <!-- Slide 2: Parameter Optimization -->
+    <div class="slide">
+      <h2>参数优化 / Parameter Optimization</h2>
+      <div class="math-box">
+        <h4>Transmon 频率公式推导</h4>
+        <p>从 Cooper pair box 哈密顿量出发：</p>
+        <div class="formula">
+          Ĥ = 4E_C (n̂ - n_g)² - E_J cos(φ̂)
+        </div>
+        <p>在电荷基下展开，保留最低两个能级（|0⟩ 和 |1⟩），做二阶泰勒展开：</p>
+        <div class="derivation-step">
+          <b>步骤1</b>：cos(φ) ≈ 1 - φ²/2 → Ĥ ≈ 4E_C(n̂ - n_g)² + E_J φ̂²/2
+        </div>
+        <div class="derivation-step">
+          <b>步骤2</b>：引入升降算符 â = (φ̂ + in̂)/√(2ζ)，其中 ζ = √(8E_J/E_C)
+        </div>
+        <div class="derivation-step">
+          <b>步骤3</b>：Ĥ ≈ ℏω₁₀(â†â + 1/2) + α(â†â)²â²/2
+        </div>
+        <div class="formula">
+          ω₁₀ = (√(8E_J E_C) - E_C)/ℏ,　 α = -E_C/ℏ
+        </div>
+      </div>
+      <div class="analogy-box">
+        <h4>设计权衡 / Design Trade-off</h4>
+        <p>E_J/E_C 越大 → 电荷噪声抑制越好（Δχ ∝ exp(-√(8E_J/E_C))），但非谐性越小</p>
+        <p>非谐性 |α| 必须远大于门操作速率（~10 MHz），避免泄漏到 |2⟩ 态</p>
+        <p>最优 E_J/E_C ~ 50-80：电荷噪声 ~100 kHz，非谐性 ~200-350 MHz</p>
+      </div>
+    </div>
+
+    <!-- Slide 3: Dispersive Readout Derivation -->
+    <div class="slide">
+      <h2>色散读出推导 / Dispersive Readout Derivation</h2>
+      <div class="math-box">
+        <h4>Jaynes-Cummings 相互作用</h4>
+        <div class="formula">
+          Ĥ_int = ℏg (â†σ_- + âσ_+)
+        </div>
+        <p>g 是耦合强度，â 是腔模算符，σ_± 是 Transmon 升降算符。</p>
+      </div>
+      <div class="math-box">
+        <h4>Schrieffer-Wolff 变换</h4>
+        <p>在色散极限 |Δ| = |ω₁₀ - ω_c| ≫ g 下，做微扰展开：</p>
+        <div class="derivation-step">
+          <b>步骤1</b>：总哈密顿量 Ĥ = ℏω_c â†â + ℏω₁₀ σ_z/2 + Ĥ_int
+        </div>
+        <div class="derivation-step">
+          <b>步骤2</b>：引入变换 Î = exp[S]，其中 S = (g/Δ)(â†σ_- - âσ_+)
+        </div>
+        <div class="derivation-step">
+          <b>步骤3</b>：展开到二阶：Ĥ_eff ≈ ℏω_c â†â + ℏω₁₀ σ_z/2 + ℏ(g²/Δ) σ_z â†â
+        </div>
+        <div class="formula">
+          Ĥ_disp = ℏ(ω_c + χσ_z) â†â,　 χ = g²/Δ
+        </div>
+        <p>χ 是色散移位（dispersive shift），典型值 ~1-5 MHz。</p>
+      </div>
+      <div class="math-box">
+        <h4>态依赖的腔频率</h4>
+        <div class="formula">
+          ω_c(|0⟩) = ω_c - χ,　 ω_c(|1⟩) = ω_c + χ
+        </div>
+        <p>通过测量反射系数 Γ(ω) 或透射系数 T(ω) 的相位差，判断 Transmon 状态。</p>
+      </div>
+    </div>
+
+    <!-- Slide 4: Readout Fidelity -->
+    <div class="slide">
+      <h2>读出保真度 / Readout Fidelity</h2>
+      <div class="math-box">
+        <h4>信噪比 (SNR)</h4>
+        <div class="formula">
+          SNR = (κ n̄)² / n̄_noise = κ² n̄ / n̄_noise
+        </div>
+        <p>κ 是腔带宽，n̄ 是平均光子数，n̄_noise 是噪声光子数。</p>
+      </div>
+      <div class="math-box">
+        <h4>读出保真度推导</h4>
+        <div class="derivation-step">
+          设测量时间 τ_m，信号光子数 n̄_sig = κ n̄ τ_m
+        </div>
+        <div class="derivation-step">
+          噪声光子数 n̄_noise = n̄_th τ_m (热噪声)
+        </div>
+        <div class="derivation-step">
+          区分条件：n̄_sig > n̄_noise → κ n̄ > n̄_th
+        </div>
+        <div class="formula">
+          F = 1 - exp(-2κ²(n̄_0 - n̄_1)²τ_m²) / 2
+        </div>
+        <p>其中 n̄_0 和 n̄_1 是 |0⟩ 和 |1⟩ 对应的平均光子数。</p>
+      </div>
+      <div class="analogy-box">
+        <h4>实际性能</h4>
+        <p>现代 Transmon 读出保真度 F > 99%，测量时间 ~100-500 ns。</p>
+        <p>使用约瑟夫森行波参量放大器（JTWPA），噪声接近量子极限。</p>
+      </div>
+    </div>
+
+    <!-- Slide 5: T₁ Limiting Factors -->
+    <div class="slide">
+      <h2>T₁ 限制因素 / T₁ Limiting Factors</h2>
+      <div class="math-box">
+        <h4>Purcell 效应</h4>
+        <div class="formula">
+          T_Purcell = Q_cavity / (2π × g² × Q_Transmon)
+        </div>
+        <p>通过读出腔辐射导致的能量弛豫。可通过 Purcell 滤波器抑制。</p>
+      </div>
+      <div class="concept-grid">
+        <div class="concept-card">
+          <h4>介电损耗 (TLS)</h4>
+          <p>• 两个能级系统（TLS）在界面处</p>
+          <p>• Si/SiO₂ 界面密度 ~10¹⁰ cm⁻²</p>
+          <p>• T₁ ~ 50-200 μs</p>
+          <p>• 主要限制因素</p>
+        </div>
+        <div class="concept-card">
+          <h4>准粒子隧穿</h4>
+          <p>• 热激发准粒子密度 n_qp</p>
+          <p>• Γ_qp ∝ √(n_qp)</p>
+          <p>• 需要 T &lt; 50 mK</p>
+          <p>• 可通过准粒子陷阱缓解</p>
+        </div>
+        <div class="concept-card">
+          <h4>电荷噪声</h4>
+          <p>• 1/f 噪声谱</p>
+          <p>• 影响 T₂* (Ramsey)</p>
+          <p>• 影响 T_echo (回波)</p>
+        </div>
+        <div class="concept-card">
+          <h4>磁通噪声</h4>
+          <p>• 磁通涡旋运动</p>
+          <p>• 影响 T₁ 和 T₂</p>
+          <p>• 可通过对称设计抑制</p>
+        </div>
+      </div>
+      <div class="analogy-box">
+        <h4>当前记录 (2024)</h4>
+        <p>IBM：T₁ > 1 ms，T₂ > 500 μs（单量子比特）</p>
+        <p>Quantinuum（离子阱）：T₂ > 10 s</p>
+      </div>
+    </div>
+
+    <!-- Slide 6: Improved Transmon Variants -->
+    <div class="slide">
+      <h2>Transmon 改进版本 / Improved Transmon Variants</h2>
+      <table>
+        <tr><th>变体</th><th>结构特点</th><th>性能</th></tr>
+        <tr>
+          <td>Xmon (Cross)</td>
+          <td>十字形电极，电容更大，E_J/E_C ~ 50</td>
+          <td>T₂ ~ 100 μs，IBM 主力</td>
+        </tr>
+        <tr>
+          <td>g-mon</td>
+          <td>直接耦合两个 Transmon，可调 g</td>
+          <td>无需总线，耦合强度可调</td>
+        </tr>
+        <tr>
+          <td>C-shunt</td>
+          <td>底部加电容 shunt，减少电压噪声</td>
+          <td>T₂ 更长，对电荷噪声不敏感</td>
+        </tr>
+        <tr>
+          <td>Fluxonium</td>
+          <td>~1000，电荷噪声极低</td>
+          <td>T₁ ~ 1 ms，非谐性 ~1 GHz</td>
+        </tr>
+        <tr>
+          <td>0-π qubit</td>
+          <td>拓扑保护，对电荷和磁通噪声都抑制</td>
+          <td>理论上 T₁, T₂ 都非常长</td>
+        </tr>
+        <tr>
+          <td>EFS (Echo)</td>
+          <td>扩展 Fluxonium，对称设计</td>
+          <td>对磁通噪声一阶不敏感</td>
+        </tr>
+      </table>
+      <div class="math-box">
+        <h4>Fluxonium 哈密顿量</h4>
+        <div class="formula">
+          Ĥ = 4E_C n̂² + E_L (φ̂ - φ_ext)²/2 - E_J cos(φ̂)
+        </div>
+        <p>E_L 是电感能量，φ_ext 是外磁通。当 E_J/E_C ~ 1000 时，形成周期势阱。</p>
+      </div>
+    </div>
+
+    <!-- Slide 7: Design Exercise -->
+    <div class="slide">
+      <h2>Transmon 设计练习 / Design Exercise</h2>
+      <div class="analogy-box">
+        <h4>例题：设计一个 Transmon</h4>
+        <p>目标：ω₁₀/2π = 5 GHz，α/2π = -250 MHz</p>
+        <div class="derivation-step">
+          <b>步骤1</b>：由 α = -E_C/ℏ → E_C = 2π × 250 MHz × ℏ = h × 250 MHz
+        </div>
+        <div class="derivation-step">
+          <b>步骤2</b>：由 ω₁₀ = (√(8E_J E_C) - E_C)/ℏ → √(8E_J E_C) = ℏω₁₀ + E_C
+        </div>
+        <div class="derivation-step">
+          <b>步骤3</b>：8E_J E_C = (h×5 GHz + h×250 MHz)² = (h×5.25 GHz)²
+        </div>
+        <div class="derivation-step">
+          <b>步骤4</b>：E_J = (h×5.25 GHz)² / (8 × h×250 MHz) = h × 13.8 GHz
+        </div>
+        <div class="derivation-step">
+          <b>步骤5</b>：E_J/E_C = 13.8 / 0.25 = 55 ✓
+        </div>
+        <div class="derivation-step">
+          <b>步骤6</b>：C_Σ = e²/(2E_C) = (1.6×10⁻¹⁹)² / (2 × h × 250 MHz) ≈ 100 fF
+        </div>
+        <div class="derivation-step">
+          <b>步骤7</b>：I_c = 2π E_J/Φ₀ = 2π × h × 13.8 GHz / (2.07×10⁻¹⁵) ≈ 27 μA
+        </div>
+      </div>
+      <div class="quiz-box">
+        <h4>练习：如果目标频率改为 6 GHz，非谐性 -200 MHz，求 E_J/E_C</h4>
+        <p>提示：E_C = h × 200 MHz，√(8E_J E_C) = h(6 GHz + 200 MHz) = h × 6.2 GHz</p>
+        <p>E_J = (h×6.2 GHz)²/(8×h×200 MHz) = h × 24.0 GHz</p>
+        <p>E_J/E_C = 24.0/0.2 = 120（更大的 E_J/E_C，更好的电荷噪声抑制）</p>
+      </div>
+    </div>
+
+    <!-- Slide 8: Summary -->
+    <div class="slide">
+      <h2>课堂总结 / Summary</h2>
+      <div class="concept-grid">
+        <div class="concept-card">
+          <h4>1. 参数优化</h4>
+          <p>• E_J/E_C ~ 50-100</p>
+          <p>• ω₁₀ = (√(8E_J E_C) - E_C)/ℏ</p>
+          <p>• α = -E_C/ℏ</p>
+        </div>
+        <div class="concept-card">
+          <h4>2. 色散读出</h4>
+          <p>• χ = g²/Δ</p>
+          <p>• 态依赖腔频率偏移</p>
+          <p>• F > 99%</p>
+        </div>
+        <div class="concept-card">
+          <h4>3. T₁ 限制</h4>
+          <p>• 介电损耗（TLS）</p>
+          <p>• 准粒子隧穿</p>
+          <p>• Purcell 效应</p>
+        </div>
+        <div class="concept-card">
+          <h4>4. 改进版本</h4>
+          <p>• Xmon, g-mon</p>
+          <p>• Fluxonium, 0-π</p>
+          <p>• 拓扑保护</p>
+        </div>
+      </div>
+      <div class="analogy-box" style="text-align:left;">
+        <h4>下节课预告</h4>
+        <p>第9课：量子门与电路 —— 通用量子计算、单比特门分解、谐振读出</p>
+      </div>
+    </div>
+
+    <!-- Controls -->
+    <div class="controls">
+      <button id="prev" onclick="navigate(-1)">← 上一页</button>
+      <span class="slide-num" id="slideNum">1 / 8</span>
+      <button id="next" onclick="navigate(1)">下一页 →</button>
+    </div>
+  </div>
+
+  <script>
+    let current = 1;
+    const totalSlides = 8;
+    function navigate(dir) {
+      const newSlide = current + dir;
+      if (newSlide < 1 || newSlide > totalSlides) return;
+      document.querySelectorAll('.slide')[current - 1].classList.remove('active');
+      document.querySelectorAll('.slide')[newSlide - 1].classList.add('active');
+      current = newSlide;
+      document.getElementById('slideNum').textContent = current + ' / ' + totalSlides;
+      document.getElementById('prev').disabled = (current === 1);
+      document.getElementById('next').disabled = (current === totalSlides);
+    }
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'ArrowRight' || e.key === ' ') navigate(1);
+      else if (e.key === 'ArrowLeft') navigate(-1);
+    });
+    document.addEventListener('DOMContentLoaded', function() {
+      if (typeof renderMathInElement === 'function') {
+        renderMathInElement(document.body, {
+          delimiters: [
+            {left: '$$', right: '$$', display: true},
+            {left: '$', right: '$', display: false}
+          ]
+        });
+      }
+    });
+  </script>
+</body>
+</html>

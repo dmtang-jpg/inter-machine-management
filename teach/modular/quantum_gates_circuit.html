@@ -1,0 +1,1209 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>量子门与电路 · 交互式仿真（含门分解与电路验证）</title>
+  <link rel="stylesheet" href="/teach/modular/font-size-selector.js">
+  <script src="/teach/modular/pwd-check.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: #080c14; color: #e0e0e0; font-family: 'Segoe UI', 'Microsoft YaHei', system-ui, sans-serif; overflow-x: hidden; min-height: 100vh; }
+
+    .page-header { background: linear-gradient(135deg, #1a1f35, #1e0a35); padding: 16px 28px; border-bottom: 2px solid #4a2580; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; }
+    .page-header h1 { font-size: 20px; color: #a855f7; }
+    .page-header .subtitle { font-size: 12px; color: #9ca3af; margin-top: 2px; }
+
+    .main-grid { display: grid; grid-template-columns: 260px 1fr 310px; gap: 12px; max-width: 1400px; margin: 12px auto; }
+
+    /* Gate panel */
+    .gate-panel { background: #0d1117; border: 1px solid #1e293b; border-radius: 8px; padding: 12px; overflow-y: auto; max-height: fit-content; }
+    .gate-panel h3 { color: #c084fc; font-size: 11px; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1px; }
+    .gate-category { margin-bottom: 10px; }
+    .gate-category-title { font-size: 10px; color: #6b7280; margin-bottom: 4px; }
+    .gate-btn { display: inline-flex; align-items: center; gap: 4px; background: #1a1040; border: 1px solid #4c1d95; color: #c4b5fd; padding: 4px 8px; border-radius: 4px; font-size: 11px; cursor: pointer; margin: 2px; font-family: 'Courier New', monospace; transition: all 0.15s; white-space: nowrap; }
+    .gate-btn:hover { background: #3730a3; border-color: #7c3aed; color: white; }
+    .gate-btn.two-qubit { border-color: #059669; color: #6ee7b7; }
+    .gate-btn.two-qubit:hover { background: #065f46; border-color: #10b981; }
+    .gate-btn.measure { border-color: #fb923c; color: #fdba74; }
+    .gate-btn.control { border-color: #ef4444; color: #fca5a5; }
+
+    /* Circuit area */
+    .circuit-area { background: #0a0e16; border: 1px solid #1e293b; border-radius: 8px; padding: 14px; }
+    .circuit-area h3 { color: #c084fc; font-size: 11px; margin-bottom: 8px; }
+    .circuit-container { background: #111827; border: 1px solid #1e293b; border-radius: 8px; padding: 16px; min-height: 200px; position: relative; overflow-x: auto; overflow-y: auto; max-height: 250px; }
+    .circuit-svg { overflow: visible; min-height: 180px; }
+    .wire-line { stroke: #4b5563; stroke-width: 2; fill: none; }
+    .gate-box { fill: #312e81; stroke: #7c3aed; stroke-width: 1.5; rx: 4; cursor: pointer; transition: all 0.15s; }
+    .gate-box:hover { fill: #4338ca; stroke: #a78bfa; }
+    .gate-box.two-qubit { fill: #064e3b; stroke: #10b981; }
+    .gate-text { fill: #e0e0e0; font-family: 'Courier New', monospace; font-size: 11px; pointer-events: none; text-anchor: middle; dominant-baseline: central; }
+    .wire-label { fill: #9ca3af; font-family: 'Courier New', monospace; font-size: 13px; }
+    .connector { fill: #7c3aed; }
+    .cnot-line { stroke: #7c3aed; stroke-width: 2; }
+
+    /* Controls */
+    .control-bar { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; padding-top: 8px; border-top: 1px solid #1e293b; }
+    .ctrl-btn { padding: 6px 14px; border-radius: 6px; font-size: 11px; cursor: pointer; border: 1px solid #374151; background: #1f2937; color: #d1d5db; transition: all 0.15s; white-space: nowrap; }
+    .ctrl-btn:hover { background: #374151; }
+    .ctrl-btn.primary { background: #5b21b6; border-color: #7c3aed; color: white; }
+    .ctrl-btn.primary:hover { background: #7c3aed; }
+    .ctrl-btn.active { background: #7c3aed; border-color: #a78bfa; color: white; }
+
+    /* Templates */
+    .templates-bar { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; }
+    .template-btn { padding: 4px 10px; border-radius: 4px; font-size: 11px; cursor: pointer; border: 1px solid #334151; background: #1f2937; color: #d1d5db; }
+    .template-btn:hover { background: #374151; border-color: #6366f1; }
+
+    /* State panel */
+    .state-panel { background: #0d1117; border: 1px solid #1e293b; border-radius: 8px; padding: 12px; }
+    .state-panel h3 { color: #c084fc; font-size: 11px; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1px; }
+    .state-block { background: #111827; border: 1px solid #1e293b; border-radius: 6px; padding: 10px; margin-bottom: 10px; }
+    .state-block h4 { font-size: 10px; color: #6b7280; margin-bottom: 6px; }
+
+    /* Unitary display */
+    .unitary-display { font-family: 'Courier New', monospace; font-size: 11px; color: #c4b5fd; overflow-x: auto; white-space: nowrap; }
+    .unitary-display table { border-collapse: collapse; margin-top: 4px; }
+    .unitary-display td { padding: 2px 6px; border: 1px solid #374151; text-align: center; min-width: 70px; font-size: 10px; }
+
+    /* Validation panel */
+    .validation-result { padding: 8px; border-radius: 4px; font-size: 11px; margin-top: 6px; display: none; }
+    .validation-result.show { display: block; }
+    .validation-result.pass { background: rgba(34,197,94,0.1); border: 1px solid #22c55e; color: #4ade80; }
+    .validation-result.fail { background: rgba(239,68,68,0.1); border: 1px solid #ef4444; color: #f87171; }
+    .validation-result.info { background: rgba(99,102,241,0.1); border: 1px solid #6366f1; color: #a78bfa; }
+
+    /* Probability bars */
+    .stats-bar { display: flex; gap: 4px; margin-top: 6px; }
+    .bar-container { flex: 1; position: relative; }
+    .bar-label { font-size: 9px; color: #9ca3af; width: 100%; text-align: center; margin-bottom: 2px; }
+    .bar-outer { height: 50px; background: #1f2937; border-radius: 4px; position: relative; }
+    .bar-inner { position: absolute; bottom: 0; width: 100%; border-radius: 4px; transition: height 0.3s; }
+    .bar-inner.zero { background: #3b82f6; }
+    .bar-inner.one { background: #ef4444; }
+
+    /* Bloch sphere section */
+    .bloch-section { grid-column: 1 / -1; border-top: 1px solid #1e293b; background: #080c14; padding: 12px 20px; margin-top: 8px; }
+    .bloch-section h3 { color: #c084fc; font-size: 11px; margin-bottom: 8px; }
+    .bloch-container { display: grid; grid-template-columns: 220px 1fr 300px; gap: 16px; align-items: start; }
+    .bloch-canvas-wrap { background: radial-gradient(ellipse at center, #111827, #030712); border: 1px solid #1e293b; border-radius: 8px; width: 220px; height: 180px; position: relative; }
+    #bloch-canvas { width: 100%; height: 100%; cursor: grab; }
+    #bloch-canvas:active { cursor: grabbing; }
+    .bloch-info { font-size: 11px; color: #9ca3af; line-height: 1.5; padding: 8px; }
+    .bloch-info span { color: #c4b5fd; }
+
+    /* Gate decomposition info */
+    .decomp-info { font-size: 11px; color: #9ca3af; line-height: 1.6; padding: 8px; background: rgba(15, 23, 42, 0.5); border-radius: 4px; margin-top: 6px; }
+
+    /* Qubit count selector */
+    .qubit-select { display: flex; gap: 4px; align-items: center; margin-bottom: 6px; }
+    .qubit-select label { font-size: 11px; color: #cbd5e1; }
+    .qubit-select button { background: #1f2937; border: 1px solid #374151; color: #d1d5db; padding: 3px 8px; border-radius: 4px; cursor: pointer; font-size: 11px; }
+    .qubit-select button.active { background: #5b21b6; border-color: #7c3aed; color: white; }
+
+    /* Correctness checklist */
+    .checklist { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0; }
+    .check-item { padding: 3px 8px; border-radius: 4px; font-size: 10px; border: 1px solid #334151; background: #1f2937; color: #9ca3af; cursor: default; }
+    .check-item.valid { border-color: #22c55e; color: #4ade80; background: rgba(34,197,94,0.1); }
+    .check-item.invalid { border-color: #ef4444; color: #f87171; background: rgba(239,68,68,0.1); }
+
+    @media (max-width: 1000px) {
+      .main-grid { grid-template-columns: 1fr; }
+      .bloch-container { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="font-size-selector-body">
+  <div class="page-header">
+    <div>
+      <h1>量子门与电路 · 交互式仿真</h1>
+      <div class="subtitle">点击门添加到电路 · 观察态矢量和矩阵变化 · 门分解与电路验证</div>
+    </div>
+    <div style="font-size:11px;color:#6b7280;">电子学院 · 量子计算教学</div>
+    <div style="font-size:11px;margin-top:4px;">
+      <b>课前预习：</b><a href="quantum_prerequisites.html#rabi" style="color:#818cf8;">Rabi振荡</a> · <a href="quantum_prerequisites.html#time-evolution" style="color:#818cf8;">时间演化</a> · <a href="quantum_prerequisites.html#qho" style="color:#818cf8;">量子谐振子</a>
+    </div>
+  </div>
+
+  <div class="main-grid">
+    <!-- Left: Gate Palette -->
+    <div class="gate-panel">
+      <h3>量子门 / Gates</h3>
+      <div class="qubit-select">
+        <label>量子比特数:</label>
+        <button id="qb2" class="active" onclick="setQubitCount(2)">2</button>
+        <button id="qb3" onclick="setQubitCount(3)">3</button>
+      </div>
+
+      <div class="gate-category">
+        <div class="gate-category-title">Pauli 门</div>
+        <span class="gate-btn" data-gate="X">X</span>
+        <span class="gate-btn" data-gate="Y">Y</span>
+        <span class="gate-btn" data-gate="Z">Z</span>
+      </div>
+      <div class="gate-category">
+        <div class="gate-category-title">Hadamard & Phase</div>
+        <span class="gate-btn" data-gate="H">H</span>
+        <span class="gate-btn" data-gate="S">S</span>
+        <span class="gate-btn" data-gate="T">T</span>
+      </div>
+      <div class="gate-category">
+        <div class="gate-category-title">旋转门 (输入角度)</div>
+        <span class="gate-btn" data-gate="RX">Rₓ(π/2)</span>
+        <span class="gate-button" data-gate="RY">Rᵧ(π/2)</span>
+        <span class="gate-btn" data-gate="RZ">R_z(π/2)</span>
+      </div>
+      <div class="gate-category">
+        <div class="gate-category-title">双量子门</div>
+        <span class="gate-btn two-qubit" data-gate="CNOT">CNOT</span>
+        <span class="gate-btn two-qubit" data-gate="CZ">CZ</span>
+        <span class="gate-btn two-qubit" data-gate="SWAP">SWAP</span>
+      </div>
+      <div class="gate-category" id="three-qubit-gates" style="display:none;">
+        <div class="gate-category-title">三量子门</div>
+        <span class="gate-btn two-qubit" data-gate="TOFF">Toffoli</span>
+        <span class="gate-btn two-qubit" data-gate="FREDK">Fredkin</span>
+      </div>
+      <div class="gate-category">
+        <div class="gate-category-title">测量 & 重置</div>
+        <span class="gate-btn measure" data-gate="MEASURE">Measure</span>
+        <span class="gate-btn control" data-gate="RESET">Reset |0⟩</span>
+      </div>
+
+      <h3 style="margin-top:14px;">常见电路模板</h3>
+      <div class="templates-bar">
+        <button class="template-btn" onclick="loadTemplate('bell')">贝尔态制备</button>
+        <button class="template-btn" onclick="loadTemplate('ghz')">GHZ 态</button>
+        <button class="template-btn" onclick="loadTemplate('grover')">Grover 迭代</button>
+        <button class="template-btn" onclick="loadTemplate('teleport')">量子隐形传态</button>
+        <button class="template-btn" onclick="loadTemplate('swap')">SWAP 测试</button>
+        <button class="template-btn" onclick="loadTemplate('error')">纠错编码</button>
+      </div>
+    </div>
+
+    <!-- Center: Circuit Builder -->
+    <div class="circuit-area">
+      <h3>量子电路 / Circuit Builder</h3>
+      <div class="templates-bar" style="margin-bottom:6px;">
+        <span style="font-size:10px;color:#6b7280;">点击左侧门添加到电路，然后点击「运行」按钮</span>
+      </div>
+      <div class="circuit-container">
+        <svg id="circuit-svg" class="circuit-svg" width="760" height="200"></svg>
+      </div>
+      <div class="control-bar">
+        <button class="ctrl-btn primary" onclick="runCircuit()">▶ Run</button>
+        <button class="ctrl-btn" onclick="stepForward()">⏭ Step</button>
+        <button class="ctrl-btn" onclick="undoGate()">↶ Undo</button>
+        <button class="ctrl-btn" onclick="clearCircuit()">🗑 Clear</button>
+        <button class="ctrl-btn" onclick="shotSimulation(1024)">📊 1024 Shots</button>
+        <button class="ctrl-btn" onclick="verifyCircuit()">✓ 电路验证</button>
+        <button class="ctrl-btn" onclick="optimizeCircuit()">⚡ 门优化</button>
+      </div>
+      <div id="validation-display" class="validation-result"></div>
+    </div>
+
+    <!-- Right: State + Unitary -->
+    <div class="state-panel">
+      <h3>当前量子态 |ψ⟩</h3>
+      <div class="state-block">
+        <div id="state-display" style="font-family:monospace;font-size:12px;color:#c4b5fd;word-break:break-all;">|00⟩</div>
+      </div>
+
+      <h3>电路酉矩阵 U</h3>
+      <div class="state-block">
+        <div id="unitary-display" class="unitary-display">I₄</div>
+      </div>
+
+      <h3>末态概率分布</h3>
+      <div class="state-block">
+        <div class="stats-bar" id="prob-bars"></div>
+      </div>
+
+      <h3>门分解信息</h3>
+      <div class="state-block">
+        <div id="decomp-display" class="decomp-info">点击电路中的门查看分解</div>
+      </div>
+    </div>
+
+    <!-- Bottom: Bloch Sphere -->
+    <div class="bloch-section">
+      <h3>Bloch 球（qubit 0 约化态）</h3>
+      <div class="bloch-container">
+        <div class="bloch-canvas-wrap">
+          <canvas id="bloch-canvas"></canvas>
+        </div>
+        <div class="bloch-info">
+          <p>θ = <span id="bloch-theta">0.00</span> rad</p>
+          <p>φ = <span id="bloch-phi">0.00</span> rad</p>
+          <p>|r| = <span id="bloch-mag">1.00</span></p>
+          <p>P(|0⟩) = <span id="bloch-p0">1.00</span></p>
+          <p>P(|1⟩) = <span id="bloch-p1">0.00</span></p>
+          <p style="margin-top:6px;color:#6b7280;font-size:10px;">点击旋转门（Rₓ, Rᵧ, R_z）可在球上实时看到状态矢量的旋转轨迹。</p>
+        </div>
+        <div class="bloch-info">
+          <h4 style="color:#c084fc;font-size:11px;margin-bottom:6px;">电路正确性检查</h4>
+          <div class="checklist" id="checklist">
+            <span class="check-item" id="check-unitary">⬜ 酉性检查</span>
+            <span class="check-item" id="check-reversible">⬜ 可逆性</span>
+            <span class="check-item" id="check-depth">⬜ 电路深度</span>
+            <span class="check-item" id="check-gatecount">⬜ 门数量</span>
+            <span class="check-item" id="check-entangle">⬜ 纠缠产生</span>
+            <span class="check-item" id="check-measure">⬜ 测量位置</span>
+          </div>
+          <div id="check-result" style="font-size:10px;color:#9ca3af;margin-top:6px;"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  </div><!-- end font-size body -->
+
+  <script>
+    // === Quantum State Simulation ===
+    let NUM_QUBITS = 2;
+    let DIM = 4;
+
+    class Complex {
+      constructor(re = 0, im = 0) { this.re = re; this.im = im; }
+      add(b) { return new Complex(this.re + b.re, this.im + b.im); }
+      sub(b) { return new Complex(this.re - b.re, this.im - b.im); }
+      mul(b) { return new Complex(this.re * b.re - this.im * b.im, this.re * b.im + this.im * b.re); }
+      abs2() { return this.re * this.re + this.im * this.im; }
+      abs() { return Math.sqrt(this.abs2()); }
+      arg() { return Math.atan2(this.im, this.re); }
+      conj() { return new Complex(this.re, -this.im); }
+      scale(s) { return new Complex(this.re * s, this.im * s); }
+      toString(prec = 3) {
+        if (Math.abs(this.im) < 1e-10) return this.re.toFixed(prec);
+        if (Math.abs(this.re) < 1e-10) return this.im.toFixed(prec) + 'i';
+        return `${this.re.toFixed(prec)} + ${this.im.toFixed(prec)}i`;
+      }
+    }
+
+    // Initialize state to |00...0⟩
+    let state;
+    function initState() {
+      state = new Array(DIM).fill(null).map(() => new Complex(0, 0));
+      state[0] = new Complex(1, 0);
+    }
+    initState();
+
+    // Gate Definitions
+    const I2 = [[new Complex(1,0), new Complex(0,0)], [new Complex(0,0), new Complex(1,0)]];
+    const X = [[new Complex(0,0), new Complex(1,0)], [new Complex(1,0), new Complex(0,0)]];
+    const Y = [[new Complex(0,0), new Complex(0,-1)], [new Complex(0,1), new Complex(0,0)]];
+    const Z = [[new Complex(1,0), new Complex(0,0)], [new Complex(0,0), new Complex(-1,0)]];
+    const H = [[new Complex(1/Math.SQRT2,0), new Complex(1/Math.SQRT2,0)],
+               [new Complex(1/Math.SQRT2,0), new Complex(-1/Math.SQRT2,0)]];
+    const S = [[new Complex(1,0), new Complex(0,0)], [new Complex(0,0), new Complex(0,1)]];
+    const T = [[new Complex(1,0), new Complex(0,0)], [new Complex(0,0), new Complex(Math.cos(Math.PI/4), Math.sin(Math.PI/4))]];
+
+    function rx(theta) {
+      const c = Math.cos(theta/2), s = Math.sin(theta/2);
+      return [[new Complex(c,0), new Complex(0,-s)], [new Complex(0,-s), new Complex(c,0)]];
+    }
+    function ry(theta) {
+      const c = Math.cos(theta/2), s = Math.sin(theta/2);
+      return [[new Complex(c,0), new Complex(-s,0)], [new Complex(s,0), new Complex(c,0)]];
+    }
+    function rz(theta) {
+      const c = Math.cos(theta/2), s = Math.sin(theta/2);
+      return [[new Complex(c,-s), new Complex(0,0)], [new Complex(0,0), new Complex(c,s)]];
+    }
+
+    // Apply 2x2 gate to specific qubit
+    function applySingleGate(U, qubit, st, nQubits) {
+      const dim = 1 << nQubits;
+      const newstate = new Array(dim).fill(null).map(() => new Complex(0,0));
+      for (let i = 0; i < dim; i++) {
+        const bit = (i >> (nQubits - 1 - qubit)) & 1;
+        const partner = i & ~(1 << (nQubits - 1 - qubit));
+        for (let row = 0; row < 2; row++) {
+          const target = partner | (row << (nQubits - 1 - qubit));
+          newstate[i] = newstate[i].add(U[row][bit].mul(st[target]));
+        }
+      }
+      return newstate;
+    }
+
+    // CNOT with configurable control and target
+    function applyCNOT(st, control, target, nQubits) {
+      const dim = 1 << nQubits;
+      const newstate = st.slice();
+      for (let i = 0; i < dim; i++) {
+        const cbit = (i >> (nQubits - 1 - control)) & 1;
+        if (cbit === 1) {
+          const flipped = i ^ (1 << (nQubits - 1 - target));
+          const temp = newstate[i];
+          newstate[i] = newstate[flipped];
+          newstate[flipped] = temp;
+        }
+      }
+      return newstate;
+    }
+
+    // CZ with configurable control and target
+    function applyCZ(st, c, t, nQubits) {
+      const dim = 1 << nQubits;
+      const newstate = st.slice();
+      for (let i = 0; i < dim; i++) {
+        const cb = (i >> (nQubits - 1 - c)) & 1;
+        const tb = (i >> (nQubits - 1 - t)) & 1;
+        if (cb === 1 && tb === 1) newstate[i] = newstate[i].scale(-1);
+      }
+      return newstate;
+    }
+
+    // SWAP
+    function applySWAP(st, q0, q1, nQubits) {
+      return applyCNOT(applyCNOT(st, q0, q1, nQubits), q1, q0, nQubits);
+    }
+
+    // Toffoli (CCNOT)
+    function applyToffoli(st, c1, c2, target, nQubits) {
+      const dim = 1 << nQubits;
+      const newstate = st.slice();
+      for (let i = 0; i < dim; i++) {
+        const b1 = (i >> (nQubits - 1 - c1)) & 1;
+        const b2 = (i >> (nQubits - 1 - c2)) & 1;
+        if (b1 === 1 && b2 === 1) {
+          const flipped = i ^ (1 << (nQubits - 1 - target));
+          const temp = newstate[i];
+          newstate[i] = newstate[flipped];
+          newstate[flipped] = temp;
+        }
+      }
+      return newstate;
+    }
+
+    // Fredkin (CSWAP)
+    function applyFredkin(st, c, t1, t2, nQubits) {
+      const dim = 1 << nQubits;
+      const newstate = st.slice();
+      for (let i = 0; i < dim; i++) {
+        const cb = (i >> (nQubits - 1 - c)) & 1;
+        if (cb === 1) {
+          const tb1 = (i >> (nQubits - 1 - t1)) & 1;
+          const tb2 = (i >> (nQubits - 1 - t2)) & 1;
+          if (tb1 !== tb2) {
+            const flipped = i ^ ((1 << (nQubits - 1 - t1)) | (1 << (nQubits - 1 - t2)));
+            const temp = newstate[i];
+            newstate[i] = newstate[flipped];
+            newstate[flipped] = temp;
+          }
+        }
+      }
+      return newstate;
+    }
+
+    // Circuit state
+    let circuitGates = [];
+    let currentStep = 0;
+
+    // Gate decomposition info
+    const gateDecomps = {
+      'X': 'X = H·S·S·H = RX(π)',
+      'Y': 'Y = RY(π)·Z',
+      'Z': 'Z = S·S = RZ(π)',
+      'H': 'H = (X+Z)/√2 = RY(π/2)·RZ(π)',
+      'S': 'S = T·T = RZ(π/2)',
+      'T': 'T = RZ(π/4)',
+      'RX': 'RX(θ) = e^(-iθX/2)',
+      'RY': 'RY(θ) = e^(-iθY/2)',
+      'RZ': 'RZ(θ) = e^(-iθZ/2)',
+      'CNOT': 'CNOT = |0⟩⟨0|⊗I + |1⟩⟨1|⊗X',
+      'CZ': 'CZ = diag(1,1,1,-1) = (I⊗H)·CNOT·(I⊗H)',
+      'SWAP': 'SWAP = CNOT₀₁·CNOT₁₀·CNOT₀₁',
+      'TOFF': 'Toffoli = CCNOT (双控制非门)',
+      'FREDK': 'Fredkin = CSWAP (控制交换门)'
+    };
+
+    function applyGateSequence() {
+      initState();
+      for (let i = 0; i < Math.min(currentStep, circuitGates.length); i++) {
+        const { gate, qubit, param, control, target } = circuitGates[i];
+        switch (gate) {
+          case 'X': state = applySingleGate(X, qubit, state, NUM_QUBITS); break;
+          case 'Y': state = applySingleGate(Y, qubit, state, NUM_QUBITS); break;
+          case 'Z': state = applySingleGate(Z, qubit, state, NUM_QUBITS); break;
+          case 'H': state = applySingleGate(H, qubit, state, NUM_QUBITS); break;
+          case 'S': state = applySingleGate(S, qubit, state, NUM_QUBITS); break;
+          case 'T': state = applySingleGate(T, qubit, state, NUM_QUBITS); break;
+          case 'RX': state = applySingleGate(rx(param), qubit, state, NUM_QUBITS); break;
+          case 'RY': state = applySingleGate(ry(param), qubit, state, NUM_QUBITS); break;
+          case 'RZ': state = applySingleGate(rz(param), qubit, state, NUM_QUBITS); break;
+          case 'CNOT': state = applyCNOT(state, control, target, NUM_QUBITS); break;
+          case 'CZ': state = applyCZ(state, control, target, NUM_QUBITS); break;
+          case 'SWAP': state = applySWAP(state, 0, 1, NUM_QUBITS); break;
+          case 'TOFF': state = applyToffoli(state, circuitGates[i].control1, circuitGates[i].control2, target, NUM_QUBITS); break;
+          case 'FREDK': state = applyFredkin(state, control, circuitGates[i].target1, circuitGates[i].target2, NUM_QUBITS); break;
+        }
+      }
+      updateDisplay();
+      updateBloch();
+    }
+
+    function updateDisplay() {
+      const labels = [];
+      for (let i = 0; i < DIM; i++) {
+        labels.push('|' + i.toString(2).padStart(NUM_QUBITS, '0') + '⟩');
+      }
+      let stateStr = '';
+      for (let i = 0; i < DIM; i++) {
+        if (state[i].abs2() > 0.001) {
+          if (stateStr) stateStr += ' + ';
+          stateStr += `(${state[i].toString()}) ${labels[i]}`;
+        }
+      }
+      if (!stateStr) stateStr = '0';
+      document.getElementById('state-display').innerHTML = stateStr.replace(/\(([^)]+)\)/g, '<span style="color:#fbbf24;">($1)</span>');
+
+      // Probability bars
+      const probBars = document.getElementById('prob-bars');
+      probBars.innerHTML = '';
+      for (let i = 0; i < DIM; i++) {
+        const p = state[i].abs2();
+        probBars.innerHTML += `<div class="bar-container"><div class="bar-label">${labels[i]}</div><div class="bar-outer"><div class="bar-inner ${i === 0 ? 'zero' : 'one'}" style="height:${p * 100}%"></div></div></div>`;
+      }
+
+      // Unitary display
+      computeUnitary();
+    }
+
+    // Compute full unitary matrix
+    function computeUnitary() {
+      // Start with identity
+      let U = [];
+      for (let i = 0; i < DIM; i++) {
+        U[i] = [];
+        for (let j = 0; j < DIM; j++) {
+          U[i][j] = new Complex(i === j ? 1 : 0, 0);
+        }
+      }
+
+      // Apply gates in sequence
+      for (let g = 0; g < Math.min(currentStep, circuitGates.length); g++) {
+        const { gate, qubit, param, control, target, control1, control2, target1, target2 } = circuitGates[g];
+        let gateMatrix = null;
+
+        if (gate === 'X') gateMatrix = buildSingleGateMatrix(X, qubit);
+        else if (gate === 'Y') gateMatrix = buildSingleGateMatrix(Y, qubit);
+        else if (gate === 'Z') gateMatrix = buildSingleGateMatrix(Z, qubit);
+        else if (gate === 'H') gateMatrix = buildSingleGateMatrix(H, qubit);
+        else if (gate === 'S') gateMatrix = buildSingleGateMatrix(S, qubit);
+        else if (gate === 'T') gateMatrix = buildSingleGateMatrix(T, qubit);
+        else if (gate === 'RX') gateMatrix = buildSingleGateMatrix(rx(param), qubit);
+        else if (gate === 'RY') gateMatrix = buildSingleGateMatrix(ry(param), qubit);
+        else if (gate === 'RZ') gateMatrix = buildSingleGateMatrix(rz(param), qubit);
+        else if (gate === 'CNOT') gateMatrix = buildTwoQubitGateMatrix(control, target, 'CNOT');
+        else if (gate === 'CZ') gateMatrix = buildTwoQubitGateMatrix(control, target, 'CZ');
+        else if (gate === 'SWAP') gateMatrix = buildTwoQubitGateMatrix(0, 1, 'SWAP');
+        else if (gate === 'TOFF') gateMatrix = buildToffoliMatrix(control1, control2, target);
+        else if (gate === 'FREDK') gateMatrix = buildFredkinMatrix(control, target1, target2);
+
+        if (gateMatrix) {
+          U = matrixMultiply(gateMatrix, U);
+        }
+      }
+
+      displayUnitary(U);
+    }
+
+    function buildSingleGateMatrix(gateU, qubit) {
+      const dim = DIM;
+      const mat = [];
+      for (let i = 0; i < dim; i++) {
+        mat[i] = [];
+        for (let j = 0; j < dim; j++) {
+          mat[i][j] = new Complex(0, 0);
+        }
+      }
+      for (let i = 0; i < dim; i++) {
+        const bit = (i >> (NUM_QUBITS - 1 - qubit)) & 1;
+        const partner = i & ~(1 << (NUM_QUBITS - 1 - qubit));
+        for (let row = 0; row < 2; row++) {
+          const target = partner | (row << (NUM_QUBITS - 1 - qubit));
+          mat[target][i] = gateU[row][bit];
+        }
+      }
+      return mat;
+    }
+
+    function buildTwoQubitGateMatrix(q1, q2, type) {
+      const dim = DIM;
+      const mat = [];
+      for (let i = 0; i < dim; i++) {
+        mat[i] = [];
+        for (let j = 0; j < dim; j++) {
+          mat[i][j] = new Complex(i === j ? 1 : 0, 0);
+        }
+      }
+
+      if (type === 'CNOT') {
+        for (let i = 0; i < dim; i++) {
+          const cbit = (i >> (NUM_QUBITS - 1 - q1)) & 1;
+          if (cbit === 1) {
+            const flipped = i ^ (1 << (NUM_QUBITS - 1 - q2));
+            mat[flipped][i] = new Complex(1, 0);
+            mat[i][i] = new Complex(0, 0);
+          }
+        }
+      } else if (type === 'CZ') {
+        for (let i = 0; i < dim; i++) {
+          const b1 = (i >> (NUM_QUBITS - 1 - q1)) & 1;
+          const b2 = (i >> (NUM_QUBITS - 1 - q2)) & 1;
+          if (b1 === 1 && b2 === 1) mat[i][i] = new Complex(-1, 0);
+        }
+      } else if (type === 'SWAP') {
+        for (let i = 0; i < dim; i++) {
+          const b1 = (i >> (NUM_QUBITS - 1 - q1)) & 1;
+          const b2 = (i >> (NUM_QUBITS - 1 - q2)) & 1;
+          if (b1 !== b2) {
+            const flipped = i ^ ((1 << (NUM_QUBITS - 1 - q1)) | (1 << (NUM_QUBITS - 1 - q2)));
+            mat[flipped][i] = new Complex(1, 0);
+            mat[i][i] = new Complex(0, 0);
+          }
+        }
+      }
+      return mat;
+    }
+
+    function buildToffoliMatrix(c1, c2, tgt) {
+      const dim = DIM;
+      const mat = [];
+      for (let i = 0; i < dim; i++) {
+        mat[i] = [];
+        for (let j = 0; j < dim; j++) {
+          mat[i][j] = new Complex(i === j ? 1 : 0, 0);
+        }
+      }
+      for (let i = 0; i < dim; i++) {
+        const b1 = (i >> (NUM_QUBITS - 1 - c1)) & 1;
+        const b2 = (i >> (NUM_QUBITS - 1 - c2)) & 1;
+        if (b1 === 1 && b2 === 1) {
+          const flipped = i ^ (1 << (NUM_QUBITS - 1 - tgt));
+          mat[flipped][i] = new Complex(1, 0);
+          mat[i][i] = new Complex(0, 0);
+        }
+      }
+      return mat;
+    }
+
+    function buildFredkinMatrix(c, t1, t2) {
+      const dim = DIM;
+      const mat = [];
+      for (let i = 0; i < dim; i++) {
+        mat[i] = [];
+        for (let j = 0; j < dim; j++) {
+          mat[i][j] = new Complex(i === j ? 1 : 0, 0);
+        }
+      }
+      for (let i = 0; i < dim; i++) {
+        const cb = (i >> (NUM_QUBITS - 1 - c)) & 1;
+        if (cb === 1) {
+          const tb1 = (i >> (NUM_QUBITS - 1 - t1)) & 1;
+          const tb2 = (i >> (NUM_QUBITS - 1 - t2)) & 1;
+          if (tb1 !== tb2) {
+            const flipped = i ^ ((1 << (NUM_QUBITS - 1 - t1)) | (1 << (NUM_QUBITS - 1 - t2)));
+            mat[flipped][i] = new Complex(1, 0);
+            mat[i][i] = new Complex(0, 0);
+          }
+        }
+      }
+      return mat;
+    }
+
+    function matrixMultiply(A, B) {
+      const n = A.length;
+      const C = [];
+      for (let i = 0; i < n; i++) {
+        C[i] = [];
+        for (let j = 0; j < n; j++) {
+          C[i][j] = new Complex(0, 0);
+          for (let k = 0; k < n; k++) {
+            C[i][j] = C[i][j].add(A[i][k].mul(B[k][j]));
+          }
+        }
+      }
+      return C;
+    }
+
+    function displayUnitary(U) {
+      const el = document.getElementById('unitary-display');
+      let html = 'U = <table style="border-collapse:collapse;">';
+      for (let r = 0; r < Math.min(U.length, 8); r++) {
+        html += '<tr>';
+        for (let c = 0; c < Math.min(U.length, 8); c++) {
+          const val = U[r][c];
+          const display = val.abs() < 0.001 ? '0' : val.toString(2);
+          html += `<td style="padding:2px 6px;border:1px solid #374151;font-size:10px;">${display}</td>`;
+        }
+        html += '</tr>';
+      }
+      html += '</table>';
+      if (U.length > 8) html += `<span style="color:#6b7280;">... (${U.length}×${U.length} matrix)</span>`;
+      el.innerHTML = html;
+    }
+
+    // === Bloch Sphere Canvas ===
+    const canvas = document.getElementById('bloch-canvas');
+    const ctx = canvas.getContext('2d');
+    let sphereRadius = 60;
+    let sphereCenter = { x: 0, y: 0 };
+    let rotationAngle = 0;
+    let isDragging = false;
+    let prevMouse = { x: 0, y: 0 };
+
+    function resizeCanvas() {
+      const rect = canvas.parentElement.getBoundingClientRect();
+      canvas.width = rect.width;
+      canvas.height = rect.height;
+      sphereRadius = Math.min(rect.width, rect.height) * 0.38;
+      sphereCenter = { x: rect.width / 2, y: rect.height / 2 };
+    }
+
+    function project3Dto2D(x, y, z, angle) {
+      const cos = Math.cos(angle), sin = Math.sin(angle);
+      const rx = x * cos + z * sin;
+      const rz = -x * sin + z * cos;
+      const persp = 1 / (1 - rz / 200);
+      return {
+        x: sphereCenter.x + rx * persp * sphereRadius,
+        y: sphereCenter.y + y * persp * sphereRadius,
+        z: rz
+      };
+    }
+
+    function drawBlochSphere(angle) {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      const R = sphereRadius;
+
+      // Sphere outline
+      ctx.beginPath();
+      ctx.arc(sphereCenter.x, sphereCenter.y, R, 0, Math.PI * 2);
+      ctx.strokeStyle = '#374151';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+
+      // Equator
+      ctx.beginPath();
+      ctx.ellipse(sphereCenter.x, sphereCenter.y, R, R * 0.3, 0, 0, Math.PI * 2);
+      ctx.strokeStyle = '#4b5563';
+      ctx.stroke();
+
+      // Axes
+      const origin = project3Dto2D(0, 0, 0, angle);
+      const xAxis = project3Dto2D(1.2, 0, 0, angle);
+      const yAxis = project3Dto2D(0, 1.2, 0, angle);
+      const zAxis = project3Dto2D(0, 0, 1.2, angle);
+
+      ctx.strokeStyle = '#ef4444'; ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.moveTo(origin.x, origin.y); ctx.lineTo(xAxis.x, xAxis.y); ctx.stroke();
+      ctx.fillStyle = '#ef4444'; ctx.font = '11px monospace'; ctx.fillText('x', xAxis.x + 5, xAxis.y);
+
+      ctx.strokeStyle = '#3b82f6';
+      ctx.beginPath(); ctx.moveTo(origin.x, origin.y); ctx.lineTo(yAxis.x, yAxis.y); ctx.stroke();
+      ctx.fillStyle = '#3b82f6'; ctx.fillText('y', yAxis.x + 5, yAxis.y);
+
+      ctx.strokeStyle = '#22c55e';
+      ctx.beginPath(); ctx.moveTo(origin.x, origin.y); ctx.lineTo(zAxis.x, zAxis.y); ctx.stroke();
+      ctx.fillStyle = '#22c55e'; ctx.fillText('z', zAxis.x + 5, zAxis.y);
+
+      // State vector from qubit 0 reduced state
+      const r00 = state[0].abs2() + (DIM > 1 ? state[1].abs2() : 0) + (DIM > 2 ? state[2].abs2() : 0) + (DIM > 3 ? state[3].abs2() : 0);
+      const r11 = DIM > 4 ? state[4].abs2() : (DIM > 2 ? state[2].abs2() : 0);
+      // For 2-qubit: r00 = P(q0=0), r11 = P(q0=1)
+      const p0 = state.slice(0, DIM / 2).reduce((sum, c) => sum + c.abs2(), 0);
+      const p1 = state.slice(DIM / 2).reduce((sum, c) => sum + c.abs2(), 0);
+
+      const theta = 2 * Math.acos(Math.sqrt(Math.max(0, p0)));
+      // Compute off-diagonal for phi
+      let rho01_re = 0, rho01_im = 0;
+      for (let i = 0; i < DIM / 2; i++) {
+        const a = state[i];
+        const b = state[i + DIM / 2];
+        const prod = a.mul(b.conj());
+        rho01_re += prod.re;
+        rho01_im += prod.im;
+      }
+      let phi = Math.atan2(rho01_im, rho01_re);
+      if (isNaN(phi)) phi = 0;
+
+      const bx = Math.sin(theta) * Math.cos(phi);
+      const by = Math.sin(theta) * Math.sin(phi);
+      const bz = Math.cos(theta);
+
+      const tip = project3Dto2D(bx, by, bz + 0.1, angle);
+      const tail = project3Dto2D(bx, by, bz, angle);
+
+      ctx.beginPath();
+      ctx.moveTo(sphereCenter.x, sphereCenter.y);
+      ctx.lineTo(tail.x, tail.y);
+      ctx.strokeStyle = '#f59e0b';
+      ctx.lineWidth = 2.5;
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.arc(tip.x, tip.y, 4, 0, Math.PI * 2);
+      ctx.fillStyle = '#f59e0b';
+      ctx.fill();
+
+      // Update display
+      document.getElementById('bloch-theta').textContent = theta.toFixed(3);
+      document.getElementById('bloch-phi').textContent = phi.toFixed(3);
+      document.getElementById('bloch-mag').textContent = (Math.sqrt(bx * bx + by * by + bz * bz)).toFixed(3);
+      document.getElementById('bloch-p0').textContent = p0.toFixed(3);
+      document.getElementById('bloch-p1').textContent = p1.toFixed(3);
+    }
+
+    function animate() {
+      rotationAngle += 0.003;
+      drawBlochSphere(rotationAngle);
+      requestAnimationFrame(animate);
+    }
+
+    // === Circuit SVG Drawing ===
+    function drawCircuit() {
+      const svg = document.getElementById('circuit-svg');
+      svg.querySelectorAll('.circuit-gate, .circuit-wire-action').forEach(e => e.remove());
+
+      const wireY = [];
+      for (let i = 0; i < NUM_QUBITS; i++) wireY.push(40 + i * 50);
+      const startX = 80;
+      const gateSpacing = 55;
+      const gateSize = 28;
+
+      // Adjust SVG height
+      svg.setAttribute('height', Math.max(200, wireY[wireY.length - 1] + 40));
+
+      // Draw wire labels
+      for (let i = 0; i < NUM_QUBITS; i++) {
+        const label = document.createElementNS(svg.namespaceURI, 'text');
+        label.setAttribute('x', 15);
+        label.setAttribute('y', wireY[i] + 5);
+        label.setAttribute('class', 'wire-label');
+        label.textContent = `|q${i}⟩`;
+        label.classList.add('circuit-wire-action');
+        svg.appendChild(label);
+      }
+
+      circuitGates.forEach((g, idx) => {
+        const x = startX + idx * gateSpacing + (idx >= 6 ? 15 : 0);
+        const svgNS = svg.namespaceURI;
+
+        if (g.gate === 'CNOT' || g.gate === 'CZ' || g.gate === 'SWAP' || g.gate === 'TOFF' || g.gate === 'FREDK') {
+          const cy = wireY[g.control !== undefined ? g.control : 0];
+          const ty = wireY[g.target !== undefined ? g.target : 1];
+
+          if (g.gate === 'CNOT') {
+            const cDot = document.createElementNS(svgNS, 'circle');
+            cDot.setAttribute('cx', x); cDot.setAttribute('cy', cy);
+            cDot.setAttribute('r', 4); cDot.setAttribute('class', 'connector');
+            svg.appendChild(cDot);
+
+            const tCircle = document.createElementNS(svgNS, 'circle');
+            tCircle.setAttribute('cx', x); tCircle.setAttribute('cy', ty);
+            tCircle.setAttribute('r', 7); tCircle.setAttribute('fill', 'none');
+            tCircle.setAttribute('stroke', '#7c3aed'); tCircle.setAttribute('stroke-width', 1.5);
+            tCircle.classList.add('circuit-wire-action');
+            svg.appendChild(tCircle);
+
+            const plusH = document.createElementNS(svgNS, 'line');
+            plusH.setAttribute('x1', x - 3); plusH.setAttribute('y1', ty);
+            plusH.setAttribute('x2', x + 3); plusH.setAttribute('y2', ty);
+            plusH.setAttribute('stroke', '#7c3aed'); plusH.setAttribute('stroke-width', 1.5);
+            plusH.classList.add('circuit-wire-action');
+            svg.appendChild(plusH);
+
+            const plusV = document.createElementNS(svgNS, 'line');
+            plusV.setAttribute('x1', x); plusV.setAttribute('y1', ty - 3);
+            plusV.setAttribute('x2', x); plusV.setAttribute('y2', ty + 3);
+            plusV.setAttribute('stroke', '#7c3aed'); plusV.setAttribute('stroke-width', 1.5);
+            plusV.classList.add('circuit-wire-action');
+            svg.appendChild(plusV);
+
+            const vLine = document.createElementNS(svgNS, 'line');
+            vLine.setAttribute('x1', x); vLine.setAttribute('y1', cy);
+            vLine.setAttribute('x2', x); vLine.setAttribute('y2', ty);
+            vLine.setAttribute('stroke', '#7c3aed'); vLine.setAttribute('stroke-width', 1.5);
+            vLine.classList.add('circuit-wire-action');
+            svg.appendChild(vLine);
+          } else if (g.gate === 'CZ') {
+            const cDot = document.createElementNS(svgNS, 'circle');
+            cDot.setAttribute('cx', x); cDot.setAttribute('cy', cy);
+            cDot.setAttribute('r', 4); cDot.setAttribute('fill', '#7c3aed');
+            cDot.classList.add('connector');
+            svg.appendChild(cDot);
+            const tDot = document.createElementNS(svgNS, 'circle');
+            tDot.setAttribute('cx', x); tDot.setAttribute('cy', ty);
+            tDot.setAttribute('r', 4); tDot.setAttribute('fill', '#7c3aed');
+            tDot.classList.add('connector');
+            svg.appendChild(tDot);
+            const vLine = document.createElementNS(svgNS, 'line');
+            vLine.setAttribute('x1', x); vLine.setAttribute('y1', cy);
+            vLine.setAttribute('x2', x); vLine.setAttribute('y2', ty);
+            vLine.setAttribute('stroke', '#7c3aed'); vLine.setAttribute('stroke-width', 1.5);
+            vLine.classList.add('circuit-wire-action');
+            svg.appendChild(vLine);
+          } else if (g.gate === 'SWAP') {
+            [cy, ty].forEach(y => {
+              const s1 = document.createElementNS(svgNS, 'line');
+              s1.setAttribute('x1', x - 5); s1.setAttribute('y1', y - 5);
+              s1.setAttribute('x2', x + 5); s1.setAttribute('y2', y + 5);
+              s1.setAttribute('stroke', '#10b981'); s1.setAttribute('stroke-width', 2);
+              s1.classList.add('circuit-wire-action');
+              svg.appendChild(s1);
+              const s2 = document.createElementNS(svgNS, 'line');
+              s2.setAttribute('x1', x - 5); s2.setAttribute('y1', y + 5);
+              s2.setAttribute('x2', x + 5); s2.setAttribute('y2', y - 5);
+              s2.setAttribute('stroke', '#10b981'); s2.setAttribute('stroke-width', 2);
+              s2.classList.add('circuit-wire-action');
+              svg.appendChild(s2);
+            });
+            const vLine = document.createElementNS(svgNS, 'line');
+            vLine.setAttribute('x1', x); vLine.setAttribute('y1', cy);
+            vLine.setAttribute('x2', x); vLine.setAttribute('y2', ty);
+            vLine.setAttribute('stroke', '#10b981'); vLine.setAttribute('stroke-width', 1);
+            vLine.setAttribute('stroke-dasharray', '4,2');
+            vLine.classList.add('circuit-wire-action');
+            svg.appendChild(vLine);
+          } else if (g.gate === 'TOFF') {
+            const c1y = wireY[g.control1];
+            const c2y = wireY[g.control2];
+            const tgtY = wireY[g.target];
+            [c1y, c2y].forEach(y => {
+              const dot = document.createElementNS(svgNS, 'circle');
+              dot.setAttribute('cx', x); dot.setAttribute('cy', y);
+              dot.setAttribute('r', 4); dot.setAttribute('fill', '#7c3aed');
+              svg.appendChild(dot);
+            });
+            const tCircle = document.createElementNS(svgNS, 'circle');
+            tCircle.setAttribute('cx', x); tCircle.setAttribute('cy', tgtY);
+            tCircle.setAttribute('r', 7); tCircle.setAttribute('fill', 'none');
+            tCircle.setAttribute('stroke', '#7c3aed'); tCircle.setAttribute('stroke-width', 1.5);
+            svg.appendChild(tCircle);
+            const plusH = document.createElementNS(svgNS, 'line');
+            plusH.setAttribute('x1', x - 3); plusH.setAttribute('y1', tgtY);
+            plusH.setAttribute('x2', x + 3); plusH.setAttribute('y2', tgtY);
+            plusH.setAttribute('stroke', '#7c3aed'); plusH.setAttribute('stroke-width', 1.5);
+            svg.appendChild(plusH);
+            const plusV = document.createElementNS(svgNS, 'line');
+            plusV.setAttribute('x1', x); plusV.setAttribute('y1', tgtY - 3);
+            plusV.setAttribute('x2', x); plusV.setAttribute('y2', tgtY + 3);
+            plusV.setAttribute('stroke', '#7c3aed'); plusV.setAttribute('stroke-width', 1.5);
+            svg.appendChild(plusV);
+            // Connect all three
+            const minY = Math.min(c1y, c2y, tgtY);
+            const maxY = Math.max(c1y, c2y, tgtY);
+            const vLine = document.createElementNS(svgNS, 'line');
+            vLine.setAttribute('x1', x); vLine.setAttribute('y1', minY);
+            vLine.setAttribute('x2', x); vLine.setAttribute('y2', maxY);
+            vLine.setAttribute('stroke', '#7c3aed'); vLine.setAttribute('stroke-width', 1.5);
+            svg.appendChild(vLine);
+          }
+        } else {
+          const y = wireY[g.qubit];
+          const rect = document.createElementNS(svgNS, 'rect');
+          rect.setAttribute('x', x - gateSize / 2);
+          rect.setAttribute('y', y - gateSize / 2);
+          rect.setAttribute('width', gateSize);
+          rect.setAttribute('height', gateSize);
+          rect.setAttribute('class', 'gate-box circuit-gate');
+          rect.style.cursor = 'pointer';
+          rect.onclick = () => showGateDecomp(g);
+          svg.appendChild(rect);
+          const text = document.createElementNS(svgNS, 'text');
+          text.setAttribute('x', x); text.setAttribute('y', y);
+          text.setAttribute('class', 'gate-text circuit-gate');
+          text.textContent = g.gate + (g.param ? `(${(g.param * 180 / Math.PI).toFixed(0)}°)` : '');
+          text.style.cursor = 'pointer';
+          text.onclick = () => showGateDecomp(g);
+          svg.appendChild(text);
+        }
+      });
+
+      // Extend wire if needed
+      const totalGates = circuitGates.length;
+      const neededWidth = startX + totalGates * gateSpacing + 60;
+      if (neededWidth > 760) svg.setAttribute('width', neededWidth);
+      else svg.setAttribute('width', 760);
+    }
+
+    function showGateDecomp(g) {
+      const decompEl = document.getElementById('decomp-display');
+      const info = gateDecomps[g.gate] || '无分解信息';
+      let extra = '';
+      if (g.gate === 'CNOT' || g.gate === 'CZ') {
+        extra = `<br>控制: q${g.control}, 目标: q${g.target}`;
+      } else if (g.gate === 'RX' || g.gate === 'RY' || g.gate === 'RZ') {
+        extra = `<br>角度: ${(g.param * 180 / Math.PI).toFixed(1)}° (${g.param.toFixed(3)} rad)`;
+      } else {
+        extra = `<br>量子比特: q${g.qubit}`;
+      }
+      decompEl.innerHTML = `<b>${g.gate}</b>: ${info}${extra}`;
+    }
+
+    // === Event Handlers ===
+    document.querySelectorAll('.gate-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const gate = btn.dataset.gate;
+        let param = null;
+        let qubit = 0;
+        let control = 0, target = 1;
+        let control1 = 0, control2 = 1, target2 = 2;
+
+        if (gate === 'RX' || gate === 'RY' || gate === 'RZ') {
+          param = Math.PI / 2; // Default rotation
+        }
+        if (gate === 'CNOT' || gate === 'CZ') {
+          control = 0; target = 1;
+        }
+        if (gate === 'TOFF') {
+          control1 = 0; control2 = 1; target = 2;
+        }
+        if (gate === 'FREDK') {
+          control = 0; target2 = 2;
+        }
+
+        circuitGates.push({ gate, qubit, param, control, target, control1, control2, target2 });
+        currentStep = circuitGates.length;
+        drawCircuit();
+        applyGateSequence();
+      });
+    });
+
+    function clearCircuit() {
+      circuitGates = [];
+      currentStep = 0;
+      drawCircuit();
+      initState();
+      updateDisplay();
+      updateBloch();
+      document.getElementById('validation-display').className = 'validation-result';
+      document.getElementById('validation-display').innerHTML = '';
+    }
+
+    function undoGate() {
+      if (circuitGates.length > 0) {
+        circuitGates.pop();
+        currentStep = circuitGates.length;
+        drawCircuit();
+        applyGateSequence();
+      }
+    }
+
+    function stepForward() {
+      if (currentStep < circuitGates.length) {
+        currentStep++;
+        applyGateSequence();
+      }
+    }
+
+    function runCircuit() {
+      currentStep = circuitGates.length;
+      applyGateSequence();
+    }
+
+    function shotSimulation(shots) {
+      const probs = state.map(s => s.abs2());
+      const counts = new Array(DIM).fill(0);
+      for (let i = 0; i < shots; i++) {
+        const r = Math.random();
+        let cum = 0;
+        for (let j = 0; j < DIM; j++) {
+          cum += probs[j];
+          if (r < cum) { counts[j]++; break; }
+        }
+      }
+      const labels = [];
+      for (let i = 0; i < DIM; i++) {
+        labels.push('|' + i.toString(2).padStart(NUM_QUBITS, '0') + '⟩');
+      }
+      let result = `📊 ${shots} shots:<br>`;
+      for (let j = 0; j < DIM; j++) {
+        const pct = (counts[j] / shots * 100).toFixed(1);
+        result += `${labels[j]}: ${counts[j]} (${pct}%)<br>`;
+      }
+      document.getElementById('state-display').innerHTML = result;
+    }
+
+    function updateBloch() { /* Triggered by animation loop */ }
+
+    // === Circuit Templates ===
+    function loadTemplate(name) {
+      clearCircuit();
+      switch (name) {
+        case 'bell':
+          circuitGates.push({ gate: 'H', qubit: 0 });
+          circuitGates.push({ gate: 'CNOT', control: 0, target: 1 });
+          break;
+        case 'ghz':
+          circuitGates.push({ gate: 'H', qubit: 0 });
+          circuitGates.push({ gate: 'CNOT', control: 0, target: 1 });
+          if (NUM_QUBITS >= 3) circuitGates.push({ gate: 'CNOT', control: 1, target: 2 });
+          break;
+        case 'grover':
+          circuitGates.push({ gate: 'H', qubit: 0 });
+          circuitGates.push({ gate: 'H', qubit: 1 });
+          circuitGates.push({ gate: 'X', qubit: 0 });
+          circuitGates.push({ gate: 'X', qubit: 1 });
+          circuitGates.push({ gate: 'CNOT', control: 0, target: 1 });
+          circuitGates.push({ gate: 'X', qubit: 0 });
+          circuitGates.push({ gate: 'X', qubit: 1 });
+          circuitGates.push({ gate: 'H', qubit: 0 });
+          circuitGates.push({ gate: 'H', qubit: 1 });
+          break;
+        case 'teleport':
+          // Bell pair between q1 and q2
+          circuitGates.push({ gate: 'H', qubit: 1 });
+          circuitGates.push({ gate: 'CNOT', control: 1, target: 2 });
+          // Bell measurement on q0 and q1
+          circuitGates.push({ gate: 'CNOT', control: 0, target: 1 });
+          circuitGates.push({ gate: 'H', qubit: 0 });
+          break;
+        case 'swap':
+          circuitGates.push({ gate: 'X', qubit: 0 });
+          circuitGates.push({ gate: 'SWAP', control: 0, target: 1 });
+          break;
+        case 'error':
+          // 3-qubit bit-flip code
+          circuitGates.push({ gate: 'CNOT', control: 0, target: 1 });
+          circuitGates.push({ gate: 'CNOT', control: 0, target: 2 });
+          break;
+      }
+      currentStep = circuitGates.length;
+      drawCircuit();
+      applyGateSequence();
+    }
+
+    // === Circuit Verification ===
+    function verifyCircuit() {
+      const results = [];
+      let allPass = true;
+
+      // Check 1: Unitarity (all gates are unitary)
+      const unitaryGates = ['X', 'Y', 'Z', 'H', 'S', 'T', 'RX', 'RY', 'RZ', 'CNOT', 'CZ', 'SWAP', 'TOFF', 'FREDK'];
+      const isUnitary = circuitGates.every(g => unitaryGates.includes(g.gate));
+      results.push({ id: 'check-unitary', pass: isUnitary, msg: isUnitary ? '✓ 所有门都是酉门' : '✗ 包含非酉门' });
+      if (!isUnitary) allPass = false;
+
+      // Check 2: Reversibility (no measurement in the middle)
+      const hasMiddleMeasure = circuitGates.some((g, i) => g.gate === 'MEASURE' && i < circuitGates.length - 1);
+      results.push({ id: 'check-reversible', pass: !hasMiddleMeasure, msg: !hasMiddleMeasure ? '✓ 电路可逆（无中间测量）' : '⚠ 中间测量破坏可逆性' });
+
+      // Check 3: Circuit depth
+      const depth = circuitGates.length;
+      results.push({ id: 'check-depth', pass: depth <= 20, msg: `电路深度: ${depth} ${depth <= 20 ? '(合理)' : '(较深，可能累积误差)' }`);
+
+      // Check 4: Gate count
+      const gateCount = circuitGates.length;
+      results.push({ id: 'check-gatecount', pass: gateCount <= 50, msg: `门数量: ${gateCount}` });
+
+      // Check 5: Entanglement generation
+      const hasTwoQubit = circuitGates.some(g => ['CNOT', 'CZ', 'SWAP', 'TOFF', 'FREDK'].includes(g.gate));
+      results.push({ id: 'check-entangle', pass: hasTwoQubit, msg: hasTwoQubit ? '✓ 包含纠缠门' : 'ℹ 无纠缠门（乘积态电路）' });
+
+      // Check 6: Measurement position
+      const measureIdx = circuitGates.findIndex(g => g.gate === 'MEASURE');
+      const measureLast = measureIdx === -1 || measureIdx === circuitGates.length - 1;
+      results.push({ id: 'check-measure', pass: measureLast, msg: measureLast ? '✓ 测量位于末尾' : '⚠ 中间测量后继续操作' });
+
+      // Update checklist
+      results.forEach(r => {
+        const el = document.getElementById(r.id);
+        if (el) {
+          el.className = 'check-item ' + (r.pass ? 'valid' : 'invalid');
+          el.textContent = (r.pass ? '✓ ' : '✗ ') + r.msg.replace(/^[✓✗]\s*/, '');
+        }
+      });
+
+      // Show result
+      const valEl = document.getElementById('validation-display');
+      valEl.className = 'validation-result show ' + (allPass ? 'pass' : 'info');
+      valEl.innerHTML = `<b>电路验证结果:</b> ${allPass ? '全部通过 ✓' : '部分检查未通过'}<br>` + results.map(r => r.msg).join('<br>');
+    }
+
+    // === Circuit Optimization ===
+    function optimizeCircuit() {
+      let optimized = [];
+      let changes = [];
+
+      for (let i = 0; i < circuitGates.length; i++) {
+        const g = circuitGates[i];
+        const next = circuitGates[i + 1];
+
+        // Rule 1: X·X = I (cancel)
+        if (next && g.gate === 'X' && next.gate === 'X' && g.qubit === next.qubit) {
+          changes.push(`X·X → I on q${g.qubit}`);
+          i++; // skip next
+          continue;
+        }
+        // Rule 2: H·H = I
+        if (next && g.gate === 'H' && next.gate === 'H' && g.qubit === next.qubit) {
+          changes.push(`H·H → I on q${g.qubit}`);
+          i++;
+          continue;
+        }
+        // Rule 3: S·S = Z
+        if (next && g.gate === 'S' && next.gate === 'S' && g.qubit === next.qubit) {
+          changes.push(`S·S → Z on q${g.qubit}`);
+          optimized.push({ gate: 'Z', qubit: g.qubit });
+          i++;
+          continue;
+        }
+        // Rule 4: T·T = S
+        if (next && g.gate === 'T' && next.gate === 'T' && g.qubit === next.qubit) {
+          changes.push(`T·T → S on q${g.qubit}`);
+          optimized.push({ gate: 'S', qubit: g.qubit });
+          i++;
+          continue;
+        }
+        // Rule 5: CNOT·CNOT = I (same control/target)
+        if (next && g.gate === 'CNOT' && next.gate === 'CNOT' &&
+            g.control === next.control && g.target === next.target) {
+          changes.push(`CNOT·CNOT → I (q${g.control}→q${g.target})`);
+          i++;
+          continue;
+        }
+        // Rule 6: Z·Z = I
+        if (next && g.gate === 'Z' && next.gate === 'Z' && g.qubit === next.qubit) {
+          changes.push(`Z·Z → I on q${g.qubit}`);
+          i++;
+          continue;
+        }
+
+        optimized.push(g);
+      }
+
+      const valEl = document.getElementById('validation-display');
+      valEl.className = 'validation-result show info';
+      if (changes.length > 0) {
+        valEl.innerHTML = `<b>门优化 (${changes.length} 处):</b><br>` + changes.join('<br>');
+        circuitGates = optimized;
+        currentStep = circuitGates.length;
+        drawCircuit();
+        applyGateSequence();
+      } else {
+        valEl.innerHTML = '<b>门优化:</b> 电路已是最简形式，无冗余门。';
+      }
+    }
+
+    // === Qubit count ===
+    function setQubitCount(n) {
+      NUM_QUBITS = n;
+      DIM = 1 << n;
+      document.getElementById('qb2').classList.toggle('active', n === 2);
+      document.getElementById('qb3').classList.toggle('active', n === 3);
+      document.getElementById('three-qubit-gates').style.display = n >= 3 ? 'block' : 'none';
+      clearCircuit();
+    }
+
+    // === Init ===
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+    animate();
+    updateDisplay();
+    drawCircuit();
+  </script>
+</body>
+</html>

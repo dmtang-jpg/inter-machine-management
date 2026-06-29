@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>第4课：量子隧穿 — WKB近似与约瑟夫森效应</title>
+  <link rel="stylesheet" href="/teach/modular/font-size-selector.js">
+  <script src="/teach/modular/pwd-check.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: #0a0e1a; color: #e0e0e0;
+      font-family: 'Segoe UI', 'Microsoft YaHei', system-ui, sans-serif;
+      min-height: 100vh; padding: 20px; line-height: 1.6;
+    }
+    .slide-container {
+      max-width: 1100px; margin: 0 auto;
+      background: linear-gradient(135deg, #0f172a 0%, #1a1a2e 100%);
+      border-radius: 12px; border: 1px solid #334155; overflow: hidden;
+    }
+    .slide {
+      display: none; padding: 40px 48px; min-height: 560px;
+      animation: fadeIn 0.3s ease-in;
+    }
+    .slide.active { display: block; }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .controls {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 14px 48px; background: #1a1a2e; border-top: 1px solid #334155;
+    }
+    .controls button {
+      background: #6366f1; color: white; border: none;
+      padding: 8px 20px; border-radius: 6px; cursor: pointer; font-size: 14px; font-family: inherit;
+    }
+    .controls button:hover { background: #4f46e5; }
+    .controls button:disabled { background: #4b5563; cursor: not-allowed; }
+    .controls .slide-num { color: #94a3b8; font-size: 14px; }
+
+    h1 { color: #60a5fa; font-size: 28px; margin-bottom: 12px; text-align: center; }
+    h2 { color: #818cf8; font-size: 22px; margin-bottom: 16px; border-bottom: 2px solid #4338ca; padding-bottom: 6px; }
+    h3 { color: #a78bfa; font-size: 18px; margin: 16px 0 8px 0; }
+    p { margin-bottom: 10px; color: #cbd5e1; font-size: 15px; }
+    .subtitle { text-align: center; color: #94a3b8; font-size: 14px; margin-bottom: 8px; }
+    .highlight { color: #fbbf24; font-weight: bold; }
+
+    .concept-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin: 14px 0; }
+    .concept-card {
+      background: linear-gradient(135deg, #1e293b, #0f172a);
+      border: 1px solid #6366f1; border-radius: 8px; padding: 14px 18px;
+    }
+    .concept-card h4 { color: #fbbf24; font-size: 15px; margin-bottom: 6px; }
+    .concept-card p { font-size: 13px; color: #94a3b8; margin-bottom: 4px; }
+
+    .analogy-box {
+      background: linear-gradient(135deg, rgba(99,102,241,0.1), rgba(167,139,250,0.05));
+      border-left: 4px solid #6366f1; border-radius: 0 8px 8px 0;
+      padding: 16px 20px; margin: 12px 0;
+    }
+    .analogy-box h4 { color: #a78bfa; margin-bottom: 8px; }
+    .analogy-box p { font-size: 14px; }
+
+    .math-box {
+      background: linear-gradient(135deg, rgba(99,102,241,0.08), rgba(99,102,241,0.02));
+      border: 1px solid #6366f1; border-radius: 8px; padding: 16px 20px; margin: 12px 0;
+    }
+    .math-box h4 { color: #a78bfa; margin-bottom: 8px; font-size: 15px; }
+    .math-box p { font-size: 14px; color: #cbd5e1; }
+    .formula { 
+      background: rgba(15,23,42,0.8); border-radius: 6px; padding: 10px 14px;
+      margin: 8px 0; text-align: center; font-size: 16px;
+    }
+
+    .quiz-box {
+      background: rgba(34,197,94,0.05); border: 1px solid #22c55e;
+      border-radius: 8px; padding: 16px 20px; margin: 14px 0;
+    }
+    .quiz-box h4 { color: #4ade80; margin-bottom: 8px; }
+    .quiz-box label { display: block; margin: 6px 0; cursor: pointer; }
+    .quiz-box input { margin-right: 8px; }
+    .quiz-box button {
+      background: #16a34a; color: white; border: none; padding: 6px 16px;
+      border-radius: 6px; cursor: pointer; margin-top: 6px;
+    }
+    .quiz-result { margin-top: 10px; padding: 8px 12px; border-radius: 4px; display: none; }
+    .quiz-result.correct { background: rgba(34,197,94,0.15); color: #4ade80; border: 1px solid #22c55e; }
+    .quiz-result.wrong { background: rgba(239,68,68,0.15); color: #f87171; border: 1px solid #ef4444; }
+
+    canvas {
+      background: #0a0e1a; border: 1px solid #334155; border-radius: 8px;
+      display: block; margin: 12px auto;
+    }
+
+    table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 14px; }
+    th { background: #1e293b; color: #fbbf24; padding: 10px 14px; text-align: left; border: 1px solid #334155; }
+    td { background: rgba(15,23,42,0.6); color: #cbd5e1; padding: 10px 14px; border: 1px solid #334155; }
+  </style>
+</head>
+<body>
+  <div class="slide-container">
+    <!-- Slide 1: Title -->
+    <div class="slide active">
+      <div class="subtitle">量子计算入门 · 第4课 / Quantum Computing Lesson 4</div>
+      <h1>量子隧穿<br><span style="font-size:18px;color:#94a3b8;">WKB Approximation & Josephson Effect</span></h1>
+      <div class="concept-grid" style="grid-template-columns: 1fr;">
+        <div class="concept-card">
+          <h4>学习目标 / Learning Objectives</h4>
+          <p>1. 理解量子隧穿的经典禁戒 / Understand classically forbidden tunneling</p>
+          <p>2. 掌握WKB近似推导透射系数 / Master WKB transmission coefficient derivation</p>
+          <p>3. 理解约瑟夫森效应方程 / Understand Josephson effect equations</p>
+          <p>4. 了解隧穿在量子计算中的应用 / Applications in quantum computing</p>
+    <p style="color:#94a3b8;font-size:12px;margin-top:8px;">
+      <b>课前预习：</b><a href="quantum_prerequisites.html#complex" style="color:#818cf8;">复数与欧拉公式</a> · <a href="quantum_prerequisites.html#time-evolution" style="color:#818cf8;">时间演化</a>
+    </p>
+        </div>
+      </div>
+      <p align="center" style="margin-top:20px;color:#a78bfa;">
+        <b>教学方式</b>：讲授 · 推导 · 可视化 / <b>课时</b>：45分钟
+      </p>
+    </div>
+
+    <!-- Slide 2: Classical vs Quantum Barrier -->
+    <div class="slide">
+      <h2>经典粒子 vs 量子粒子 / Classical vs Quantum Particle</h2>
+      <div class="analogy-box">
+        <h4>撞球类比 / Billiard Ball Analogy</h4>
+        <p>经典粒子：小球撞墙，如果能量 E < V₀，反弹回来。小球不能穿过墙壁。</p>
+        <p>量子粒子：电子遇到势垒（墙壁），即使 E < V₀，也有可能出现在墙的另一侧！</p>
+      </div>
+      <div class="concept-grid">
+        <div class="concept-card">
+          <h4>经典预期</h4>
+          <p>E < V₀ → 不可能穿过</p>
+          <p>E > V₀ → 一定能穿过</p>
+          <p>没有"不确定"区域</p>
+        </div>
+        <div class="concept-card">
+          <h4>量子实际</h4>
+          <p>E < V₀ → <b>有一定概率穿过</b></p>
+          <p>E > V₀ → <b>有一定概率反射</b></p>
+          <p>概率随势垒宽度/高度指数变化</p>
+        </div>
+      </div>
+      <div style="display:flex;justify-content:center;">
+        <canvas id="tunnelCanvas" width="700" height="340"></canvas>
+      </div>
+    </div>
+
+    <!-- Slide 3: WKB Approximation Derivation -->
+    <div class="slide">
+      <h2>WKB 近似推导 / WKB Approximation</h2>
+      <p>Wentzel-Kramers-Brillouin (WKB) 近似是计算隧穿概率的半经典方法：</p>
+      <div class="math-box">
+        <h4>定态薛定谔方程</h4>
+        <div class="formula">
+          -$\frac{ℏ^2}{2m} \frac{d^2\psi}{dx^2} + V(x)\psi = E\psi$
+        </div>
+        <p>在经典禁戒区域（V(x) > E），定义衰减常数：</p>
+        <div class="formula">
+          γ(x) = $\frac{\sqrt{2m(V(x) - E)}}{ℏ}$
+        </div>
+      </div>
+      <div class="math-box">
+        <h4>WKB 波函数 / WKB Wave Function</h4>
+        <div class="formula">
+          ψ(x) ≈ $\frac{C}{\sqrt{\gamma(x)}} \exp\left(-\int_0^x \gamma(x') dx'\right)$
+        </div>
+        <p>波函数在势垒内指数衰减 → 穿过后振幅很小但不为零！</p>
+      </div>
+    </div>
+
+    <!-- Slide 4: Transmission Coefficient -->
+    <div class="slide">
+      <h2>透射系数 / Transmission Coefficient</h2>
+      <p>对于矩形势垒（宽度 d，高度 V₀）：</p>
+      <div class="math-box">
+        <h4>精确解 / Exact Solution</h4>
+        <div class="formula">
+          T = $\left[1 + \frac{V_0^2 \sinh^2(\kappa d)}{4E(V_0 - E)}\right]^{-1}$,　 κ = $\frac{\sqrt{2m(V_0 - E)}}{ℏ}$
+        </div>
+      </div>
+      <div class="math-box">
+        <h4>厚势垒极限（κd ≫ 1）/ Thick Barrier Limit</h4>
+        <div class="formula">
+          T ≈ $16 \frac{E}{V_0} \left(1 - \frac{E}{V_0}\right) e^{-2\kappa d}$
+        </div>
+        <p>关键洞察：透射系数随势垒宽度 <span class="highlight">d</span> <b>指数衰减</b>！</p>
+      </div>
+      <div class="math-box">
+        <h4>WKB 近似（一般形势垒）/ WKB General Case</h4>
+        <div class="formula">
+          T ≈ $\exp\left(-2 \int_{x_1}^{x_2} \gamma(x) dx\right) = e^{-2\int \sqrt{2m(V(x)-E)}/ℏ \, dx}$
+        </div>
+        <p>积分区间为经典禁戒区域 [x₁, x₂]，V(x) > E。</p>
+      </div>
+    </div>
+
+    <!-- Slide 5: Josephson Junction -->
+    <div class="slide">
+      <h2>约瑟夫森结 / Josephson Junction</h2>
+      <div class="concept-grid">
+        <div class="concept-card">
+          <h4>结构</h4>
+          <p>• 两个超导体</p>
+          <p>• 中间夹薄绝缘层（~1-3nm）</p>
+          <p>• 或弱连接（缩颈）</p>
+        </div>
+        <div class="concept-card">
+          <h4>关键参数</h4>
+          <p>• 临界电流 I_c</p>
+          <p>• 约瑟夫森能量 E_J = I_cΦ₀/(2π)</p>
+          <p>• Φ₀ = h/(2e) 是磁通量子</p>
+        </div>
+      </div>
+      <div class="math-box">
+        <h4>直流约瑟夫森效应 / DC Josephson Effect</h4>
+        <div class="formula">
+          I = I_c sin(δ),　 V = 0
+        </div>
+        <p>零电压下产生超流！δ = θ₁ − θ₂ 是结两侧超导相位差。</p>
+      </div>
+      <div class="math-box">
+        <h4>交流约瑟夫森效应 / AC Josephson Effect</h4>
+        <div class="formula">
+          V = $\frac{Φ_0}{2\pi} \dot{δ}$,　 δ(t) = δ₀ + $\frac{2\pi V_0}{Φ_0}$ t
+        </div>
+        <p>直流电压 V → 相位差随时间线性增长 → 交变电流！</p>
+        <div class="formula">
+          振荡频率：f = $\frac{2eV}{h}$ = 483.6 MHz/μV
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 6: Josephson Energy & Inductance -->
+    <div class="slide">
+      <h2>约瑟夫森能量与电感 / Josephson Energy & Inductance</h2>
+      <div class="math-box">
+        <h4>电感能量 / Inductive Energy</h4>
+        <div class="formula">
+          E_J = $\frac{I_c Φ_0}{2\pi}$,　 L_J = $\frac{Φ_0}{2\pi I_c}$
+        </div>
+        <p>约瑟夫森结 = 非线性电感（电流依赖）。与传统电感不同：</p>
+        <p>E ∝ cos(δ) 而不是 E ∝ φ²/2L（线性）</p>
+      </div>
+      <div class="math-box">
+        <h4>RCSJ 模型（电阻-电容分路）/ RCSJ Model</h4>
+        <div class="formula">
+          I = I_c sin(δ) + $\frac{V}{R}$ + C $\frac{dV}{dt}$
+        </div>
+        <p>结电流 = 超流 + 正常电子隧穿电流 + 位移电流。</p>
+      </div>
+      <div style="display:flex;justify-content:center;">
+        <canvas id="jjCanvas" width="500" height="300"></canvas>
+      </div>
+    </div>
+
+    <!-- Slide 7: Tunneling Applications -->
+    <div class="slide">
+      <h2>隧穿在量子计算中的应用 / Tunneling in Quantum Computing</h2>
+      <table>
+        <tr><th>应用</th><th>机制</th><th>参数</th></tr>
+        <tr><td>超导量子比特</td><td>约瑟夫森结提供非线性电感</td><td>E_J/h ≈ 5-20 GHz</td></tr>
+        <tr><td>量子比特读出</td><td>谐振腔频率随约瑟夫森电感变化</td><td>χ = -E_C/α</td></tr>
+        <tr><td>量子隧穿显微镜(STM)</td><td>电子隧穿产生成像电流</td><td>I ∝ e^{-2κd}</td></tr>
+        <tr><td>太阳核聚变</td><td>质子克服库仑势垒</td><td>T ~ 10⁻²⁰</td></tr>
+        <tr><td>闪存/隧道二极管</td><td>电子隧穿通过薄氧化层</td><td>d ~ 3-10nm</td></tr>
+      </table>
+      <div class="analogy-box">
+        <h4>太阳核聚变的伽莫夫窗口</h4>
+        <p>太阳核心温度 (~1500万K) 远低于库仑势垒 (~1MeV)，按经典物理不应发生核聚变。</p>
+        <p>量子隧穿 + 麦克斯韦速度分布的"尾巴" → 实际反应速率对应 ~10 keV 的伽莫夫窗口。</p>
+      </div>
+    </div>
+
+    <!-- Slide 8: Quiz -->
+    <div class="slide">
+      <h2>课堂互动 / Quiz</h2>
+      <div class="quiz-box">
+        <h4>问题1：WKB近似中，透射系数 T 随势垒宽度 d 如何变化？</h4>
+        <label><input type="radio" name="q1" value="wrong"> A. 线性减小（T ∝ 1/d）</label>
+        <label><input type="radio" name="q1" value="correct"> B. 指数减小（T ∝ e^{-2κd}）</label>
+        <label><input type="radio" name="q1" value="wrong"> C. 与 d 无关</label>
+        <button onclick="checkQuiz1()">检查答案</button>
+        <div id="quiz-result-1" class="quiz-result"></div>
+      </div>
+      <div class="quiz-box">
+        <h4>问题2：约瑟夫森结施加直流电压 V，产生的电流</h4>
+        <label><input type="radio" name="q2" value="wrong"> A. 直流超流</label>
+        <label><input type="radio" name="q2" value="correct"> B. 交变电流，频率 f = 2eV/h</label>
+        <label><input type="radio" name="q2" value="wrong"> C. 正常电子隧穿电流</label>
+        <button onclick="checkQuiz2()">检查答案</button>
+        <div id="quiz-result-2" class="quiz-result"></div>
+      </div>
+    </div>
+
+    <!-- Slide 9: Summary -->
+    <div class="slide" style="text-align:center;">
+      <h2>课堂总结 / Summary</h2>
+      <div class="concept-grid">
+        <div class="concept-card">
+          <h4>1. WKB 近似</h4>
+          <p>• 经典禁戒区波函数指数衰减</p>
+          <p>• T ≈ e^{-2∫γ(x)dx}</p>
+        </div>
+        <div class="concept-card">
+          <h4>2. 约瑟夫森效应</h4>
+          <p>• DC: I = I_c sin(δ)</p>
+          <p>• AC: f = 2eV/h</p>
+        </div>
+        <div class="concept-card">
+          <h4>3. 核心应用</h4>
+          <p>• Transmon: 非线性电感</p>
+          <p>• STM: 隧穿电流成像</p>
+        </div>
+        <div class="concept-card">
+          <h4>4. 物理直觉</h4>
+          <p>• 量子粒子可以穿透势垒</p>
+          <p>• 概率指数依赖宽度</p>
+        </div>
+      </div>
+      <div class="analogy-box" style="text-align:left;">
+        <h4>下节课预告</h4>
+        <p>第5课：量子测量与退相干 —— POVM、T₁/T₂、林布莱恩主方程</p>
+      </div>
+    </div>
+
+    <!-- Controls -->
+    <div class="controls">
+      <button id="prev" onclick="navigate(-1)">← 上一页</button>
+      <span class="slide-num" id="slideNum">1 / 9</span>
+      <button id="next" onclick="navigate(1)">下一页 →</button>
+    </div>
+  </div>
+
+  <script>
+    let current = 1;
+    const totalSlides = 9;
+
+    function navigate(dir) {
+      const newSlide = current + dir;
+      if (newSlide < 1 || newSlide > totalSlides) return;
+      const slides = document.querySelectorAll('.slide');
+      slides[current - 1].classList.remove('active');
+      slides[newSlide - 1].classList.add('active');
+      current = newSlide;
+      document.getElementById('slideNum').textContent = current + ' / ' + totalSlides;
+      document.getElementById('prev').disabled = (current === 1);
+      document.getElementById('next').disabled = (current === totalSlides);
+      if (current === 2) drawTunnel();
+      if (current === 6) drawJJ();
+    }
+
+    function checkQuiz1() {
+      const result = document.getElementById('quiz-result-1');
+      const selected = document.querySelector('input[name="q1"]:checked');
+      if (!selected) { result.style.display = 'block'; result.className = 'quiz-result wrong'; result.textContent = '请选择一个选项'; return; }
+      if (selected.value === 'correct') {
+        result.style.display = 'block'; result.className = 'quiz-result correct';
+        result.innerHTML = '<b>正确！</b>透射系数随势垒宽度指数减小，T ≈ e^{-2κd}，这是量子隧穿的核心特征。';
+      } else {
+        result.style.display = 'block'; result.className = 'quiz-result wrong';
+        result.innerHTML = '<b>错误。</b>透射系数随势垒宽度指数减小，不是线性减小。波函数在势垒内指数衰减导致。';
+      }
+    }
+
+    function checkQuiz2() {
+      const result = document.getElementById('quiz-result-2');
+      const selected = document.querySelector('input[name="q2"]:checked');
+      if (!selected) { result.style.display = 'block'; result.className = 'quiz-result wrong'; result.textContent = '请选择一个选项'; return; }
+      if (selected.value === 'correct') {
+        result.style.display = 'block'; result.className = 'quiz-result correct';
+        result.innerHTML = '<b>正确！</b>直流电压 V → 相位差线性增长 → 交变电流，频率 f = 2eV/h（AC约瑟夫森效应）。';
+      } else {
+        result.style.display = 'block'; result.className = 'quiz-result wrong';
+        result.innerHTML = '<b>错误。</b>这是交流约瑟夫森效应：直流电压产生交变电流，频率 f = 2eV/h。';
+      }
+    }
+
+    // Draw tunneling visualization
+    function drawTunnel() {
+      const canvas = document.getElementById('tunnelCanvas');
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      const W = canvas.width, H = canvas.height;
+      ctx.clearRect(0, 0, W, H);
+      
+      const V0 = 150; // barrier height in pixels
+      const x0 = 200, x1 = 500;
+      const yBase = H - 60;
+      
+      // Draw barrier
+      ctx.fillStyle = '#6366f120';
+      ctx.fillRect(x0, yBase - V0, x1 - x0, V0);
+      ctx.strokeStyle = '#6366f1';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(x0, yBase - V0, x1 - x0, V0);
+      
+      // Label barrier
+      ctx.fillStyle = '#a78bfa';
+      ctx.font = '13px sans-serif';
+      ctx.fillText('V₀ (势垒)', (x0+x1)/2 - 30, yBase - V0 - 8);
+      ctx.fillText('E (粒子能量)', 20, yBase - V0 + 60);
+      
+    // Draw energy level E
+      ctx.strokeStyle = '#fbbf24';
+      ctx.lineWidth = 1.5;
+      ctx.setLineDash([4, 3]);
+      ctx.beginPath();
+      ctx.moveTo(40, yBase - V0 + 50);
+      ctx.lineTo(W - 40, yBase - V0 + 50);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      
+      // Draw wave function (oscillating before, exponential in barrier, small oscillation after)
+      ctx.strokeStyle = '#4ade80';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      
+      // Region I (x < x0): oscillating
+      for (let x = 40; x < x0; x += 2) {
+        const t = (x - 40) / (x0 - 40);
+        const amplitude = 30;
+        const y = (yBase - V0 + 50) - amplitude * Math.cos(t * 6 * Math.PI) * Math.exp(-t * 0.5);
+        if (x === 40) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      }
+      
+      // Region II (x0 < x < x1): exponential decay in barrier
+      for (let x = x0; x < x1; x += 2) {
+        const t = (x - x0) / (x1 - x0);
+        const amplitude = 30 * Math.exp(-t * 4);
+        const y = (yBase - V0 + 50) - amplitude * Math.cos(t * 3 * Math.PI);
+        ctx.lineTo(x, y);
+      }
+      
+      // Region III (x > x1): small oscillation (transmitted)
+      for (let x = x1; x < W - 40; x += 2) {
+        const t = (x - x1) / (W - 40 - x1);
+        const amplitude = 30 * Math.exp(-4) * 1.5; // small transmitted amplitude
+        const y = (yBase - V0 + 50) - amplitude * Math.cos(t * 6 * Math.PI);
+        ctx.lineTo(x, y);
+      }
+      ctx.stroke();
+      
+      // Labels
+      ctx.fillStyle = '#94a3b8';
+      ctx.font = '12px sans-serif';
+      ctx.fillText('I (入射)', 60, yBase + 30);
+      ctx.fillText('II (隧穿)', (x0+x1)/2 - 20, yBase + 30);
+      ctx.fillText('III (透射)', W - 120, yBase + 30);
+      
+      // Transmission probability annotation
+      ctx.fillStyle = '#4ade80';
+      ctx.font = 'italic 12px sans-serif';
+      ctx.fillText('透射 T ≈ e^{-2κd} ≪ 1', W - 150, yBase - 20);
+      
+      // R arrow (reflected)
+      ctx.strokeStyle = '#f87171';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      for (let x = x0; x > 100; x -= 2) {
+        const t = (x0 - x) / (x0 - 100);
+        const amplitude = 20 * Math.exp(-t * 2);
+        const y = (yBase - V0 + 50) - amplitude * Math.cos(t * 4 * Math.PI);
+        if (x === x0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      }
+      ctx.stroke();
+      
+      ctx.fillStyle = '#f87171';
+      ctx.font = 'italic 12px sans-serif';
+      ctx.fillText('反射 (1-T)', 110, yBase - 30);
+    }
+
+    // Draw Josephson junction
+    function drawJJ() {
+      const canvas = document.getElementById('jjCanvas');
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      const W = canvas.width, H = canvas.height;
+      ctx.clearRect(0, 0, W, H);
+      
+      const cx = W / 2, cy = H / 2;
+      
+      // Superconductors (wide bars)
+      ctx.fillStyle = '#60a5fa';
+      ctx.fillRect(cx - 100, cy - 70, 20, 140);
+      ctx.fillRect(cx + 80, cy - 70, 20, 140);
+      
+      // Insulator (thin)
+      ctx.fillStyle = '#fbbf24';
+      ctx.fillRect(cx - 15, cy - 50, 30, 100);
+      ctx.strokeStyle = '#fbbf24';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(cx - 15, cy - 50, 30, 100);
+      
+      // Arrows showing phase
+      ctx.strokeStyle = '#4ade80';
+      ctx.lineWidth = 2;
+      // Phase θ1 on left
+      ctx.beginPath();
+      ctx.arc(cx - 90, cy - 40, 20, 0, Math.PI * 0.7);
+      ctx.stroke();
+      ctx.fillStyle = '#4ade80';
+      ctx.font = '12px sans-serif';
+      ctx.fillText('θ₁', cx - 95, cy - 60);
+      
+      // Phase θ2 on right
+      ctx.beginPath();
+      ctx.arc(cx + 90, cy - 40, 20, Math.PI, Math.PI * 1.7);
+      ctx.stroke();
+      ctx.fillText('θ₂', cx + 82, cy - 60);
+      
+      // δ = θ₁ - θ₂
+      ctx.fillStyle = '#a78bfa';
+      ctx.font = 'bold 14px sans-serif';
+      ctx.fillText('δ = θ₁ − θ₂', cx - 35, cy - 55);
+      
+      // Current arrow
+      ctx.strokeStyle = '#6366f1';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(cx, cy + 50);
+      ctx.lineTo(cx, cy - 50);
+      ctx.stroke();
+      // Arrow head
+      ctx.beginPath();
+      ctx.moveTo(cx - 5, cy - 45);
+      ctx.lineTo(cx, cy - 50);
+      ctx.lineTo(cx + 5, cy - 45);
+      ctx.stroke();
+      ctx.fillStyle = '#6366f1';
+      ctx.font = '13px sans-serif';
+      ctx.fillText('I = I_c sin(δ)', cx + 10, cy);
+      
+      // Labels
+      ctx.fillStyle = '#94a3b8';
+      ctx.font = '11px sans-serif';
+      ctx.fillText('S', cx - 92, cy + 90);
+      ctx.fillText('S', cx + 85, cy + 90);
+      ctx.fillText('绝缘层 I', cx - 25, cy + 70);
+      
+      // Title
+      ctx.fillStyle = '#a78bfa';
+      ctx.font = '12px sans-serif';
+      ctx.fillText('约瑟夫森结 / Josephson Junction', 10, 20);
+    }
+
+    // Keyboard navigation
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'ArrowRight' || e.key === ' ') navigate(1);
+      else if (e.key === 'ArrowLeft') navigate(-1);
+    });
+
+    // Initialize KaTeX
+    document.addEventListener('DOMContentLoaded', function() {
+      renderMath(document.body);
+    });
+
+    function renderMath(container) {
+      const mathElements = container.querySelectorAll('.formula');
+      mathElements.forEach(el => {
+        if (!el.dataset.katexRendered) {
+          const spans = el.querySelectorAll('span.math');
+          spans.forEach(span => {
+            if (!span.dataset.katexRendered) {
+              katex.render(span.textContent, span, { throwOnError: false, displayMode: span.classList.contains('katex-display') });
+              span.dataset.katexRendered = 'true';
+            }
+          });
+          el.dataset.katexRendered = 'true';
+        }
+      });
+    }
+  </script>
+</body>
+</html>

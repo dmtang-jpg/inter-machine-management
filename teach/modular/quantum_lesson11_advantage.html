@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>第11课：纠缠实现与量子优势</title>
+  <link rel="stylesheet" href="/teach/modular/font-size-selector.js">
+  <script src="/teach/modular/pwd-check.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: #0a0e1a; color: #e0e0e0; font-family: 'Segoe UI', 'Microsoft YaHei', system-ui, sans-serif; min-height: 100vh; padding: 20px; line-height: 1.6; }
+    .slide-container { max-width: 1100px; margin: 0 auto; background: linear-gradient(135deg, #0f172a, #1a1a2e); border-radius: 12px; border: 1px solid #334155; overflow: hidden; }
+    .slide { display: none; padding: 40px 48px; min-height: 560px; animation: fadeIn 0.3s ease-in; }
+    .slide.active { display: block; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    .controls { display: flex; justify-content: space-between; align-items: center; padding: 14px 48px; background: #1a1a2e; border-top: 1px solid #334155; }
+    .controls button { background: #6366f1; color: white; border: none; padding: 8px 20px; border-radius: 6px; cursor: pointer; font-size: 14px; }
+    .controls button:hover { background: #4f46e5; }
+    .controls button:disabled { background: #4b5563; cursor: not-allowed; }
+    .controls .slide-num { color: #94a3b8; font-size: 14px; }
+    h1 { color: #60a5fa; font-size: 28px; text-align: center; margin-bottom: 12px; }
+    h2 { color: #818cf8; font-size: 22px; margin-bottom: 16px; border-bottom: 2px solid #4338ca; padding-bottom: 6px; }
+    h3 { color: #a78bfa; font-size: 18px; margin: 16px 0 8px 0; }
+    p { margin-bottom: 10px; color: #cbd5e1; font-size: 15px; }
+    .subtitle { text-align: center; color: #94a3b8; font-size: 14px; margin-bottom: 8px; }
+    .concept-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin: 14px 0; }
+    .concept-card { background: linear-gradient(135deg, #1e293b, #0f172a); border: 1px solid #6366f1; border-radius: 8px; padding: 14px 18px; }
+    .concept-card h4 { color: #fbbf24; font-size: 15px; margin-bottom: 6px; }
+    .concept-card p { font-size: 13px; color: #94a3b8; margin-bottom: 4px; }
+    .analogy-box { background: linear-gradient(135deg, rgba(99,102,241,0.1), rgba(167,139,250,0.05)); border-left: 4px solid #6366f1; padding: 16px 20px; margin: 12px 0; }
+    .analogy-box h4 { color: #a78bfa; margin-bottom: 8px; }
+    .math-box { background: linear-gradient(135deg, rgba(99,102,241,0.08), rgba(99,102,241,0.02)); border: 1px solid #6366f1; border-radius: 8px; padding: 16px 20px; margin: 12px 0; }
+    .math-box h4 { color: #a78bfa; margin-bottom: 8px; font-size: 15px; }
+    .formula { background: rgba(15,23,42,0.8); border-radius: 6px; padding: 10px 14px; margin: 8px 0; text-align: center; font-size: 16px; }
+    table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 14px; }
+    th { background: #1e293b; color: #fbbf24; padding: 10px 14px; text-align: left; border: 1px solid #334155; }
+    td { background: rgba(15,23,42,0.6); color: #cbd5e1; padding: 10px 14px; border: 1px solid #334155; }
+    .quiz-box { background: rgba(34,197,94,0.05); border: 1px solid #22c55e; border-radius: 8px; padding: 16px 20px; margin: 14px 0; }
+    .quiz-box h4 { color: #4ade80; margin-bottom: 8px; }
+    .quiz-box label { display: block; margin: 6px 0; cursor: pointer; }
+    .quiz-box input { margin-right: 8px; }
+    .quiz-result { margin-top: 10px; padding: 8px 12px; border-radius: 4px; display: none; }
+    .quiz-result.correct { background: rgba(34,197,94,0.15); color: #4ade80; border: 1px solid #22c55e; }
+    .quiz-result.wrong { background: rgba(239,68,68,0.15); color: #f87171; border: 1px solid #ef4444; }
+    .derivation-step { background: rgba(99,102,241,0.05); border-left: 3px solid #6366f1; padding: 8px 14px; margin: 6px 0; font-size: 14px; }
+    canvas { background: #0a0e1a; border: 1px solid #334155; border-radius: 8px; display: block; margin: 12px auto; }
+  </style>
+</head>
+<body>
+  <div class="slide-container">
+    <!-- Slide 1: Title -->
+    <div class="slide active">
+      <div class="subtitle">量子计算入门 · 第11课 / Quantum Computing Lesson 11</div>
+      <h1>纠缠实现与量子优势<br><span style="font-size:18px;color:#94a3b8;">CHSH, Deutsch-Jozsa, Shor</span></h1>
+      <div class="concept-grid" style="grid-template-columns: 1fr;">
+        <div class="concept-card">
+          <h4>学习目标 / Learning Objectives</h4>
+          <p>1. 理解纠缠的物理产生方式（SPDC、超导耦合）</p>
+          <p>2. 掌握 CHSH 不等式的严格推导</p>
+          <p>3. 理解 Deutsch-Jozsa 算法（指数加速证明）</p>
+          <p>4. 了解 Shor 算法框架（周期查找→因式分解）</p>
+          <p>5. 理解量子优势的三个核心资源</p>
+    <p style="color:#94a3b8;font-size:12px;margin-top:8px;">
+      <b>课前预习：</b><a href="quantum_prerequisites.html#complex" style="color:#818cf8;">复数与欧拉公式</a> · <a href="quantum_prerequisites.html#hermitian" style="color:#818cf8;">厄米算符</a> · <a href="quantum_prerequisites.html#time-evolution" style="color:#818cf8;">时间演化</a>
+    </p>
+        </div>
+      </div>
+      <p align="center" style="margin-top:20px;color:#a78bfa;"><b>教学方式</b>：讲授 · 推导 · 互动 / <b>课时</b>：45分钟</p>
+    </div>
+
+    <!-- Slide 2: Entanglement Generation -->
+    <div class="slide">
+      <h2>纠缠产生 / Entanglement Generation</h2>
+      <div class="math-box">
+        <h4>SPDC 过程（光子）</h4>
+        <div class="formula">
+          |ψ⟩ = ∫ dω_s dω_i f(ω_s, ω_i) â†(ω_s) â†(ω_i) |0⟩
+        </div>
+        <p>非线性晶体中，泵浦光子（ω_p）→ 信号光子（ω_s）+ 闲置光子（ω_i）</p>
+        <div class="formula">
+          ω_p = ω_s + ω_i,　 k_p = k_s + k_i
+        </div>
+        <p>能量守恒 + 动量守恒（相位匹配）→ 纠缠光子对</p>
+      </div>
+      <div class="math-box">
+        <h4>超导电路耦合</h4>
+        <div class="formula">
+          Ĥ_c = ℏg (â†₁â₂ + â₁â†₂)
+        </div>
+        <div class="derivation-step">
+          <b>步骤1</b>：初始态 |ψ(0)⟩ = |+⟩|0⟩ = (|0⟩+|1⟩)/√2 ⊗ |0⟩
+        </div>
+        <div class="derivation-step">
+          <b>步骤2</b>：时间演化 U(t) = exp(-iĤ_c t/ℏ)
+        </div>
+        <div class="derivation-step">
+          <b>步骤3</b>：当 t = π/(4g) 时，|ψ⟩ = (|00⟩ + i|11⟩)/√2
+        </div>
+        <p>通过控制耦合时间，可以产生任意贝尔态。</p>
+      </div>
+      <div class="analogy-box">
+        <h4>交叉谐振（CR）门</h4>
+        <p>Transmon 间通过电容耦合，有效相互作用：Ĥ_eff = ℏg_eff (σ_+^(1)σ_-^(2) + h.c.)</p>
+        <p>g_eff = g₁g₂(1/Δ₁ + 1/Δ₂)，通过失谐抑制直接能量交换。</p>
+      </div>
+    </div>
+
+    <!-- Slide 3: CHSH Derivation -->
+    <div class="slide">
+      <h2>CHSH 不等式推导 / CHSH Inequality Derivation</h2>
+      <div class="math-box">
+        <h4>设置</h4>
+        <div class="formula">
+          S = E(a,b) − E(a,b') + E(a',b) + E(a',b')
+        </div>
+        <p>E(a,b) = P(相同) − P(不同)，是测量方向 a 和 b 的关联函数。</p>
+      </div>
+      <div class="math-box">
+        <h4>隐变量推导（严格）</h4>
+        <div class="derivation-step">
+          <b>步骤1</b>：假设存在隐变量 λ ∈ Λ，概率分布 ρ(λ)
+        </div>
+        <div class="derivation-step">
+          <b>步骤2</b>：测量结果 A(a,λ), B(b,λ) ∈ {+1, −1}
+        </div>
+        <div class="derivation-step">
+          <b>步骤3</b>：E(a,b) = ∫ dλ ρ(λ) A(a,λ) B(b,λ)
+        </div>
+        <div class="derivation-step">
+          <b>步骤4</b>：S(λ) = A(a,λ)[B(b,λ) − B(b',λ)] + A(a',λ)[B(b,λ) + B(b',λ)]
+        </div>
+        <div class="derivation-step">
+          <b>步骤5</b>：由于 B(b,λ) ∈ {±1}，[B(b,λ) − B(b',λ)] 和 [B(b,λ) + B(b',λ)] 中一个为 ±2，另一个为 0
+        </div>
+        <div class="formula">
+          |S(λ)| ≤ 2 → |⟨S⟩| = |∫ dλ ρ(λ) S(λ)| ≤ ∫ dλ ρ(λ) |S(λ)| ≤ 2
+        </div>
+      </div>
+      <div class="math-box">
+        <h4>量子违反</h4>
+        <div class="formula">
+          |S_QM| = 2√2 ≈ 2.828 > 2
+        </div>
+        <p>对于 |Ψ⁻⟩ = (|01⟩ − |10⟩)/√2，选择角度：a=0°, a'=45°, b=22.5°, b'=67.5°</p>
+      </div>
+    </div>
+
+    <!-- Slide 4: Deutsch-Jozsa -->
+    <div class="slide">
+      <h2>Deutsch-Jozsa 算法 / Deutsch-Jozsa Algorithm</h2>
+      <div class="analogy-box">
+        <h4>问题定义</h4>
+        <p>给定函数 f: {0,1}ⁿ → {0,1}，承诺 f 要么是常函数（所有输入输出相同），要么是平衡函数（一半输出0，一半输出1）。</p>
+        <p>经典确定性算法：最坏需要 2ⁿ⁻¹ + 1 次查询。</p>
+        <p>量子算法：O(1) 次查询！</p>
+      </div>
+      <div class="math-box">
+        <h4>算法步骤</h4>
+        <div class="derivation-step">
+          <b>步骤1</b>：|0⟩⊗ⁿ|1⟩ → H⊗⁽ⁿ⁺¹⁾ → 均匀叠加态
+          <div class="formula">$|ψ_1⟩ = \frac{1}{\sqrt{2^n}} \sum_{x=0}^{2^n-1} |x⟩ \otimes \frac{|0⟩-|1⟩}{\sqrt{2}}$</div>
+        </div>
+        <div class="derivation-step">
+          <b>步骤2</b>：Oracle U_f 作用
+          <div class="formula">$U_f |x⟩|y⟩ = |x⟩|y ⊕ f(x)⟩$</div>
+          <div class="formula">$|ψ_2⟩ = \frac{1}{\sqrt{2^n}} \sum_x (-1)^{f(x)} |x⟩ \otimes \frac{|0⟩-|1⟩}{\sqrt{2}}$</div>
+        </div>
+        <div class="derivation-step">
+          <b>步骤3</b>：再次应用 H⊗ⁿ ⊗ I
+          <div class="formula">$|ψ_3⟩ = H^{⊗n} ⊗ I |ψ_2⟩$</div>
+        </div>
+        <div class="derivation-step">
+          <b>步骤4</b>：测量前 n 个量子比特
+          <div class="formula">$P(|0^{⊗n}⟩) = \left| \frac{1}{2^n} \sum_x (-1)^{f(x)} \right|^2$</div>
+        </div>
+      </div>
+      <div class="math-box">
+        <h4>证明</h4>
+        <div class="formula">
+          常函数：振幅 = ±1 → 概率 = 1
+        </div>
+        <div class="formula">
+          平衡函数：振幅 = 0 → 概率 = 0
+        </div>
+        <p>一次查询即可区分，经典算法需要指数级查询！</p>
+      </div>
+    </div>
+
+    <!-- Slide 5: Shor Algorithm -->
+    <div class="slide">
+      <h2>Shor 算法 / Shor's Algorithm</h2>
+      <div class="math-box">
+        <h4>核心思想：周期查找</h4>
+        <div class="derivation-step">
+          <b>步骤1</b>：随机选 a < N，计算 gcd(a, N)。若 ≠ 1，找到因子。
+        </div>
+        <div class="derivation-step">
+          <b>步骤2</b>：找 a 模 N 的阶 r：a^r ≡ 1 (mod N)
+        </div>
+        <div class="derivation-step">
+          <b>步骤3</b>：若 r 为偶数，gcd(a^(r/2) ± 1, N) 给出因子。
+        </div>
+      </div>
+      <div class="math-box">
+        <h4>量子部分：量子相位估计 (QPE)</h4>
+        <div class="formula">
+          U|y⟩ = |ay mod N⟩
+        </div>
+        <p>U 的本征态 |s⟩ 对应本征值 e^(2πi s/r)。通过 QPE 估计 s/r → 得到 r。</p>
+        <div class="derivation-step">
+          <b>QPE 步骤</b>：
+          <div class="formula">$|0⟩|0⟩ → H⊗ᵗ|0⟩|0⟩ → \text{控制-}U^{2^k} → \text{QFT}^† → \text{测量}$</div>
+        </div>
+      </div>
+      <div class="analogy-box">
+        <h4>复杂度对比</h4>
+        <p>经典 GNFS：亚指数时间 exp((64/9)^(1/3) (ln N)^(1/3) (ln ln N)^(2/3))</p>
+        <p>Shor 算法：多项式时间 O((log N)³)</p>
+        <p>2048位 RSA：经典 ~10¹⁰ 年，量子 ~100 天（假设 10⁶ 门/秒）</p>
+      </div>
+    </div>
+
+    <!-- Slide 6: Quantum Advantage Sources -->
+    <div class="slide">
+      <h2>量子优势来源 / Source of Quantum Advantage</h2>
+      <table>
+        <tr><th>算法</th><th>加速类型</th><th>关键资源</th></tr>
+        <tr><td>Deutsch-Jozsa</td><td>指数 O(2ⁿ) → O(1)</td><td>叠加态 + 相位反冲</td></tr>
+        <tr><td>Grover</td><td>二次 O(N) → O(√N)</td><td>振幅放大</td></tr>
+        <tr><td>Shor</td><td>指数 → 多项式</td><td>QFT + 周期查找</td></tr>
+        <tr><td>量子模拟</td><td>指数（Hilbert空间）</td><td>自然量子系统</td></tr>
+        <tr><td>HHL</td><td>指数 O(N) → O(log N)</td><td>相位估计</td></tr>
+        <tr><td>VQE</td><td>指数（多体问题）</td><td>变分原理</td></tr>
+      </table>
+      <div class="math-box">
+        <h4>三个核心资源</h4>
+        <div class="formula">
+          <b>叠加</b>：n 个量子比特同时处于 2ⁿ 个态 → 并行计算
+        </div>
+        <div class="formula">
+          <b>干涉</b>：概率幅的相干叠加 → 增强正确答案，抑制错误答案
+        </div>
+        <div class="formula">
+          <b>纠缠</b>：非经典关联 → 指数级状态空间
+        </div>
+      </div>
+      <div class="analogy-box">
+        <h4>关键洞察</h4>
+        <p>量子优势不是免费的：测量只给出一个结果，需要精心设计算法。</p>
+        <p>量子优势 ≠ 对所有问题都快，只对特定结构问题有加速。</p>
+      </div>
+    </div>
+
+    <!-- Slide 7: Quiz -->
+    <div class="slide">
+      <h2>课堂互动：辨析题</h2>
+      <div class="quiz-box">
+        <h4>问题1：Deutsch-Jozsa 算法中，如果测量结果全为 |0⟩，说明 f 是</h4>
+        <label><input type="radio" name="q1" value="correct"> A. 常函数</label>
+        <label><input type="radio" name="q1" value="wrong"> B. 平衡函数</label>
+        <label><input type="radio" name="q1" value="wrong"> C. 无法判断</label>
+        <button onclick="checkQuiz1()">检查答案</button>
+        <div id="quiz-result-1" class="quiz-result"></div>
+      </div>
+      <div class="quiz-box">
+        <h4>问题2：Shor 算法中，量子部分的核心是</h4>
+        <label><input type="radio" name="q2" value="wrong"> A. Grover 搜索</label>
+        <label><input type="radio" name="q2" value="correct"> B. 量子相位估计</label>
+        <label><input type="radio" name="q2" value="wrong"> C. 量子傅里叶变换</label>
+        <button onclick="checkQuiz2()">检查答案</button>
+        <div id="quiz-result-2" class="quiz-result"></div>
+      </div>
+      <div class="quiz-box">
+        <h4>问题3：CHSH 不等式 |S| ≤ 2 是什么理论的界限？</h4>
+        <label><input type="radio" name="q3" value="wrong"> A. 量子力学</label>
+        <label><input type="radio" name="q3" value="correct"> B. 局部隐变量理论</label>
+        <label><input type="radio" name="q3" value="wrong"> C. 相对论</label>
+        <button onclick="checkQuiz3()">检查答案</button>
+        <div id="quiz-result-3" class="quiz-result"></div>
+      </div>
+    </div>
+
+    <!-- Slide 8: Summary -->
+    <div class="slide">
+      <h2>课堂总结 / Summary</h2>
+      <div class="concept-grid">
+        <div class="concept-card">
+          <h4>1. 纠缠产生</h4>
+          <p>• SPDC（光子）</p>
+          <p>• 超导耦合（Transmon）</p>
+          <p>• 交叉谐振门</p>
+        </div>
+        <div class="concept-card">
+          <h4>2. CHSH 不等式</h4>
+          <p>• 经典界限 |S| ≤ 2</p>
+          <p>• 量子违反 2√2</p>
+          <p>• 严格推导</p>
+        </div>
+        <div class="concept-card">
+          <h4>3. Deutsch-Jozsa</h4>
+          <p>• 常函数 vs 平衡函数</p>
+          <p>• O(1) vs O(2ⁿ)</p>
+          <p>• 相位反冲</p>
+        </div>
+        <div class="concept-card">
+          <h4>4. Shor 算法</h4>
+          <p>• 周期查找 → 因式分解</p>
+          <p>• QFT 核心作用</p>
+          <p>• 多项式时间</p>
+        </div>
+      </div>
+      <div class="analogy-box" style="text-align:left;">
+        <h4>下节课预告</h4>
+        <p>第12课：硬件实现与容错 —— 稀释制冷机、读出链路、纠错码、量子体积</p>
+      </div>
+    </div>
+
+    <!-- Controls -->
+    <div class="controls">
+      <button id="prev" onclick="navigate(-1)">← 上一页</button>
+      <span class="slide-num" id="slideNum">1 / 8</span>
+      <button id="next" onclick="navigate(1)">下一页 →</button>
+    </div>
+  </div>
+
+  <script>
+    let current = 1;
+    const total = 8;
+    function navigate(dir) {
+      const newSlide = current + dir;
+      if (newSlide < 1 || newSlide > total) return;
+      const slides = document.querySelectorAll('.slide');
+      slides[current - 1].classList.remove('active');
+      slides[newSlide - 1].classList.add('active');
+      current = newSlide;
+      document.getElementById('slideNum').textContent = current + ' / ' + total;
+      document.getElementById('prev').disabled = (current === 1);
+      document.getElementById('next').disabled = (current === total);
+    }
+    function checkQuiz1() {
+      const result = document.getElementById('quiz-result-1');
+      const selected = document.querySelector('input[name="q1"]:checked');
+      if (!selected) { result.style.display = 'block'; result.className = 'quiz-result wrong'; result.textContent = '请选择一个选项'; return; }
+      if (selected.value === 'correct') {
+        result.style.display = 'block'; result.className = 'quiz-result correct';
+        result.innerHTML = '<b>正确！</b>全零测量意味着振幅 = ±1，说明 f 是常函数（所有输入输出相同）。';
+      } else {
+        result.style.display = 'block'; result.className = 'quiz-result wrong';
+        result.innerHTML = '<b>错误。</b>全零测量意味着振幅 = ±1，说明 f 是常函数。平衡函数的振幅为 0。';
+      }
+    }
+    function checkQuiz2() {
+      const result = document.getElementById('quiz-result-2');
+      const selected = document.querySelector('input[name="q2"]:checked');
+      if (!selected) { result.style.display = 'block'; result.className = 'quiz-result wrong'; result.textContent = '请选择一个选项'; return; }
+      if (selected.value === 'correct') {
+        result.style.display = 'block'; result.className = 'quiz-result correct';
+        result.innerHTML = '<b>正确！</b>Shor 算法的量子部分是量子相位估计（QPE），用于找到 a 模 N 的阶 r。';
+      } else {
+        result.style.display = 'block'; result.className = 'quiz-result wrong';
+        result.innerHTML = '<b>错误。</b>Shor 算法的量子部分是量子相位估计（QPE），QFT 是 QPE 的一部分。';
+      }
+    }
+    function checkQuiz3() {
+      const result = document.getElementById('quiz-result-3');
+      const selected = document.querySelector('input[name="q3"]:checked');
+      if (!selected) { result.style.display = 'block'; result.className = 'quiz-result wrong'; result.textContent = '请选择一个选项'; return; }
+      if (selected.value === 'correct') {
+        result.style.display = 'block'; result.className = 'quiz-result correct';
+        result.innerHTML = '<b>正确！</b>|S| ≤ 2 是局部隐变量理论的界限。量子力学可以达到 2√2。';
+      } else {
+        result.style.display = 'block'; result.className = 'quiz-result wrong';
+        result.innerHTML = '<b>错误。</b>|S| ≤ 2 是局部隐变量理论的界限，不是量子力学的界限。';
+      }
+    }
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'ArrowRight' || e.key === ' ') navigate(1);
+      else if (e.key === 'ArrowLeft') navigate(-1);
+    });
+    document.addEventListener('DOMContentLoaded', function() {
+      if (typeof renderMathInElement === 'function') {
+        renderMathInElement(document.body, {
+          delimiters: [
+            {left: '$$', right: '$$', display: true},
+            {left: '$', right: '$', display: false}
+          ]
+        });
+      }
+    });
+  </script>
+</body>
+</html>

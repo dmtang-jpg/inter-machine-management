@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>第12课：硬件实现与容错</title>
+  <link rel="stylesheet" href="/teach/modular/font-size-selector.js">
+  <script src="/teach/modular/pwd-check.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: #0a0e1a; color: #e0e0e0; font-family: 'Segoe UI', 'Microsoft YaHei', system-ui, sans-serif; min-height: 100vh; padding: 20px; line-height: 1.6; }
+    .slide-container { max-width: 1100px; margin: 0 auto; background: linear-gradient(135deg, #0f172a, #1a1a2e); border-radius: 12px; border: 1px solid #334155; overflow: hidden; }
+    .slide { display: none; padding: 40px 48px; min-height: 560px; animation: fadeIn 0.3s ease-in; }
+    .slide.active { display: block; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    .controls { display: flex; justify-content: space-between; align-items: center; padding: 14px 48px; background: #1a1a2e; border-top: 1px solid #334155; }
+    .controls button { background: #6366f1; color: white; border: none; padding: 8px 20px; border-radius: 6px; cursor: pointer; font-size: 14px; }
+    .controls button:hover { background: #4f46e5; }
+    .controls button:disabled { background: #4b5563; cursor: not-allowed; }
+    .controls .slide-num { color: #94a3b8; font-size: 14px; }
+    h1 { color: #60a5fa; font-size: 28px; text-align: center; margin-bottom: 12px; }
+    h2 { color: #818cf8; font-size: 22px; margin-bottom: 16px; border-bottom: 2px solid #4338ca; padding-bottom: 6px; }
+    h3 { color: #a78bfa; font-size: 18px; margin: 16px 0 8px 0; }
+    p { margin-bottom: 10px; color: #cbd5e1; font-size: 15px; }
+    .subtitle { text-align: center; color: #94a3b8; font-size: 14px; margin-bottom: 8px; }
+    .concept-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin: 14px 0; }
+    .concept-card { background: linear-gradient(135deg, #1e293b, #0f172a); border: 1px solid #6366f1; border-radius: 8px; padding: 14px 18px; }
+    .concept-card h4 { color: #fbbf24; font-size: 15px; margin-bottom: 6px; }
+    .concept-card p { font-size: 13px; color: #94a3b8; margin-bottom: 4px; }
+    .analogy-box { background: linear-gradient(135deg, rgba(99,102,241,0.1), rgba(167,139,250,0.05)); border-left: 4px solid #6366f1; padding: 16px 20px; margin: 12px 0; }
+    .analogy-box h4 { color: #a78bfa; margin-bottom: 8px; }
+    .math-box { background: linear-gradient(135deg, rgba(99,102,241,0.08), rgba(99,102,241,0.02)); border: 1px solid #6366f1; border-radius: 8px; padding: 16px 20px; margin: 12px 0; }
+    .math-box h4 { color: #a78bfa; margin-bottom: 8px; font-size: 15px; }
+    .formula { background: rgba(15,23,42,0.8); border-radius: 6px; padding: 10px 14px; margin: 8px 0; text-align: center; font-size: 16px; }
+    table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 14px; }
+    th { background: #1e293b; color: #fbbf24; padding: 10px 14px; text-align: left; border: 1px solid #334155; }
+    td { background: rgba(15,23,42,0.6); color: #cbd5e1; padding: 10px 14px; border: 1px solid #334155; }
+    canvas { background: #0a0e1a; border: 1px solid #334155; border-radius: 8px; display: block; margin: 12px auto; }
+    .derivation-step { background: rgba(99,102,241,0.05); border-left: 3px solid #6366f1; padding: 8px 14px; margin: 6px 0; font-size: 14px; }
+  </style>
+</head>
+<body>
+  <div class="slide-container">
+    <!-- Slide 1: Title -->
+    <div class="slide active">
+      <div class="subtitle">量子计算入门 · 第12课 / Quantum Computing Lesson 12</div>
+      <h1>硬件实现与容错<br><span style="font-size:18px;color:#94a3b8;">Dilution Refrigerator, Readout, Error Correction</span></h1>
+      <div class="concept-grid" style="grid-template-columns: 1fr;">
+        <div class="concept-card">
+          <h4>学习目标 / Learning Objectives</h4>
+          <p>1. 理解稀释制冷机的工作原理（³He/⁴He 相变）</p>
+          <p>2. 掌握读出链路的数学（信噪比、保真度推导）</p>
+          <p>3. 了解量子纠错码（Steane码、Surface码）</p>
+          <p>4. 理解量子体积（Quantum Volume）指标</p>
+          <p>5. 了解当前量子硬件的发展现状</p>
+    <p style="color:#94a3b8;font-size:12px;margin-top:8px;">
+      <b>课前预习：</b><a href="quantum_prerequisites.html#qho" style="color:#818cf8;">量子谐振子</a> · <a href="quantum_prerequisites.html#rabi" style="color:#818cf8;">Rabi振荡</a> · <a href="quantum_prerequisites.html#hermitian" style="color:#818cf8;">厄米算符</a>
+    </p>
+        </div>
+      </div>
+      <p align="center" style="margin-top:20px;color:#a78bfa;"><b>教学方式</b>：讲授 · 推导 · 实例 / <b>课时</b>：45分钟</p>
+    </div>
+
+    <!-- Slide 2: Dilution Refrigerator -->
+    <div class="slide">
+      <h2>稀释制冷机 / Dilution Refrigerator</h2>
+      <div class="math-box">
+        <h4>为什么需要极低温？</h4>
+        <div class="formula">
+          k_B T ≪ ℏω
+        </div>
+        <p>热激发会破坏量子态。对于 Transmon：ℏω ~ 5 GHz → T ≪ 50 mK</p>
+        <div class="formula">
+          P_{excited} = exp(-ℏω / k_B T)
+        </div>
+        <p>当 T = 10 mK 时，P_{excited} ~ 10⁻¹⁰，热激发完全可以忽略。</p>
+      </div>
+      <div class="math-box">
+        <h4>³He/⁴He 稀释制冷原理</h4>
+        <div class="derivation-step">
+          <b>步骤1</b>：³He 原子从 ⁴He 稀溶液进入浓溶液（吸热过程）
+        </div>
+        <div class="derivation-step">
+          <b>步骤2</b>：制冷功率：Q̇ = 84 ṅ₃ T² [W]
+        </div>
+        <div class="derivation-step">
+          <b>步骤3</b>：ṅ₃ 是 ³He 循环速率，典型值 ~100 μmol/s
+        </div>
+        <div class="formula">
+          T_{base} ≈ 7 mK（实际极限），典型工作温度 ~10-15 mK
+        </div>
+      </div>
+      <div class="concept-grid">
+        <div class="concept-card">
+          <h4>制冷阶段</h4>
+          <p>• 液氮预冷：77 K</p>
+          <p>• ⁴He 蒸发冷却：~1 K</p>
+          <p>• ³He/⁴He 稀释：~10 mK</p>
+          <p>• 降温时间：~12-24 小时</p>
+        </div>
+        <div class="concept-card">
+          <h4>关键参数</h4>
+          <p>• 制冷功率：~10 μW @ 100 mK</p>
+          <p>• ³He 价格：~¥1000/升</p>
+          <p>• 需要回收系统</p>
+          <p>• 振动隔离要求极高</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 3: Readout Chain -->
+    <div class="slide">
+      <h2>读出链路 / Readout Chain</h2>
+      <div class="math-box">
+        <h4>信噪比 (SNR) 推导</h4>
+        <div class="derivation-step">
+          <b>步骤1</b>：信号功率 P_sig = (κ n̄)²，κ 是腔带宽，n̄ 是平均光子数
+        </div>
+        <div class="derivation-step">
+          <b>步骤2</b>：噪声功率 P_noise = n̄_noise = n̄_th + n̄_amp
+        </div>
+        <div class="derivation-step">
+          <b>步骤3</b>：SNR = (κ n̄)² / n̄_noise
+        </div>
+        <div class="formula">
+          SNR = \frac{(\kappa \bar{n})^2}{\bar{n}_{noise}} = \frac{\kappa^2 \bar{n}^2}{\bar{n}_{th} + \hbar \omega / (2 \eta)}
+        </div>
+        <p>η 是放大器量子效率，n̄_th 是热噪声光子数。</p>
+      </div>
+      <div class="math-box">
+        <h4>读出保真度推导</h4>
+        <div class="derivation-step">
+          <b>步骤1</b>：定义 P(0|0) 为准备 |0⟩ 时测量得到 0 的概率
+        </div>
+        <div class="derivation-step">
+          <b>步骤2</b>：P(1|1) 为准备 |1⟩ 时测量得到 1 的概率
+        </div>
+        <div class="derivation-step">
+          <b>步骤3</b>：保真度 F = (P(0|0) + P(1|1)) / 2
+        </div>
+        <div class="formula">
+          F = \frac{P(0|0) + P(1|1)}{2} = 1 - \frac{P_{error}}{2}
+        </div>
+        <p>现代 Transmon 读出保真度 F > 99%，测量时间 ~100-500 ns。</p>
+      </div>
+      <div class="concept-grid">
+        <div class="concept-card">
+          <h4>HEMT 放大器</h4>
+          <p>• 高电子迁移率晶体管</p>
+          <p>• 噪声温度 ~2-5 K</p>
+          <p>• 安装在 4K 阶段</p>
+          <p>• 增益 ~30-40 dB</p>
+        </div>
+        <div class="concept-card">
+          <h4>行波参量放大器 (TWPA)</h4>
+          <p>• 约瑟夫森结阵列</p>
+          <p>• 噪声接近量子极限</p>
+          <p>• T_n ≈ ℏω/k_B ~ 250 mK</p>
+          <p>• 增益 ~20 dB</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 4: Quantum Error Correction -->
+    <div class="slide">
+      <h2>量子纠错码 / Quantum Error Correction</h2>
+      <div class="math-box">
+        <h4>[[n,k,d]] 码参数</h4>
+        <div class="formula">
+          n：物理量子比特数，k：逻辑量子比特数，d：码距
+        </div>
+        <p>码距 d = 2t + 1 → 纠正 t 个任意错误</p>
+        <p>量子 Hamming 界：2^{n-k} ≥ Σ_{j=0}^{t} C(n,j) 3^j</p>
+      </div>
+      <div class="math-box">
+        <h4>Steane [[7,1,3]] 码</h4>
+        <div class="formula">
+          |0⟩_L = \frac{1}{\sqrt{8}} (|0000000⟩ + |1010101⟩ + |0110011⟩ + |1100110⟩ + |0001111⟩ + |1011010⟩ + |0111100⟩ + |1101001⟩)
+        </div>
+        <div class="formula">
+          |1⟩_L = \frac{1}{\sqrt{8}} (|1111111⟩ + |0101010⟩ + |1001100⟩ + |0011001⟩ + |1110000⟩ + |0100101⟩ + |1000011⟩ + |0010110⟩)
+        </div>
+        <p>码距 d=3，纠正任意单量子比特错误。稳定子生成元：g₁=XIXIXIX, g₂=IXXIIXX, g₃=IIIXXXX, g₄=ZZZZZZZ, g₅=IZZIZZZ, g₆=IIIZZZZ</p>
+      </div>
+      <div class="math-box">
+        <h4>Surface Code</h4>
+        <div class="formula">
+          d=3：7×7 网格 = 49 物理比特，1 逻辑比特
+        </div>
+        <div class="formula">
+          d=5：13×13 网格 = 169 物理比特
+        </div>
+        <p>仅需最近邻相互作用，易在超导电路实现。逻辑错误率：p_L ≈ (p/p_th)^{d/2}</p>
+      </div>
+      <div class="analogy-box">
+        <h4>错误阈值定理</h4>
+        <p>如果物理门错误率 p < p_th ~ 1%，则通过级联编码可以指数降低逻辑错误率。</p>
+        <p>这是量子计算可行性的理论基础！</p>
+      </div>
+    </div>
+
+    <!-- Slide 5: Syndrome Extraction -->
+    <div class="slide">
+      <h2>症候群提取 / Syndrome Extraction</h2>
+      <div class="math-box">
+        <h4>稳定子测量</h4>
+        <div class="formula">
+          S_i = g_i ρ g_i^†
+        </div>
+        <p>通过辅助量子比特测量稳定子生成元 g_i 的本征值（±1）。</p>
+      </div>
+      <div class="math-box">
+        <h4>错误诊断示例</h4>
+        <p>假设 Steane 码中第 3 个量子比特发生 X 错误：</p>
+        <div class="formula">
+          |ψ⟩ = X_3 |ψ_L⟩
+        </div>
+        <div class="derivation-step">
+          g₁ = XIXIXIX → 与 X_3 对易 → 本征值 +1
+        </div>
+        <div class="derivation-step">
+          g₂ = IXXIIXX → 与 X_3 反对易 → 本征值 -1
+        </div>
+        <div class="derivation-step">
+          g₃ = IIIXXXX → 与 X_3 反对易 → 本征值 -1
+        </div>
+        <div class="derivation-step">
+          症候群 (+1, -1, -1) → 唯一确定错误位置在第 3 个量子比特
+        </div>
+      </div>
+      <div class="analogy-box">
+        <h4>关键约束</h4>
+        <p>症候群只告诉错误类型和位置，不告诉逻辑态信息！</p>
+        <p>这是量子纠错的核心：获取错误信息而不坍缩逻辑态。</p>
+      </div>
+    </div>
+
+    <!-- Slide 6: Quantum Volume -->
+    <div class="slide">
+      <h2>量子体积与基准测试 / Quantum Volume & Benchmarking</h2>
+      <div class="math-box">
+        <h4>量子体积 (QV) 定义</h4>
+        <div class="formula">
+          QV = 2^k, \quad k = \max\{n | \text{随机电路通过随机基准测试}\}
+        </div>
+        <div class="derivation-step">
+          <b>步骤1</b>：构建 n×n 随机酉电路（随机单比特门 + 随机双比特门）
+        </div>
+        <div class="derivation-step">
+          <b>步骤2</b>：运行电路，测量输出分布 p_{exp}
+        </div>
+        <div class="derivation-step">
+          <b>步骤3</b>：计算理想输出分布 p_{ideal}
+        </div>
+        <div class="derivation-step">
+          <b>步骤4</b>：计算交叉熵：H(p_{ideal}, p_{exp}) > 2/3 → 通过
+        </div>
+      </div>
+      <div class="math-box">
+        <h4>交叉熵基准</h4>
+        <div class="formula">
+          F_{XEB} = 2^n \langle p_{ideal}(x) \cdot p_{exp}(x) \rangle - 1
+        </div>
+        <p>F_{XEB} = 1 → 完美，F_{XEB} = 0 → 完全随机</p>
+      </div>
+      <div class="concept-grid">
+        <div class="concept-card">
+          <h4>2024 记录</h4>
+          <p>• IBM Condor：QV > 1000</p>
+          <p>• Quantinuum H2：QV > 10000</p>
+          <p>• Google Sycamore：~QV 64</p>
+        </div>
+        <div class="concept-card">
+          <h4>其他指标</h4>
+          <p>• CLOPS：经典操作/秒</p>
+          <p>• 量子门保真度</p>
+          <p>• 相干时间 T₁, T₂</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 7: Current State -->
+    <div class="slide">
+      <h2>量子硬件现状 / State of the Art (2024)</h2>
+      <table>
+        <tr><th>平台</th><th>量子比特数</th><th>T₁ (μs)</th><th>门保真度</th><th>QV</th></tr>
+        <tr>
+          <td>IBM Superconducting</td>
+          <td>1121</td>
+          <td>~1000</td>
+          <td>99.9% (单比特)</td>
+          <td>> 1000</td>
+        </tr>
+        <tr>
+          <td>Google Sycamore</td>
+          <td>70</td>
+          <td>~20</td>
+          <td>99.8%</td>
+          <td>~64</td>
+        </tr>
+        <tr>
+          <td>Quantinuum (离子阱)</td>
+          <td>32</td>
+          <td>> 10^6</td>
+          <td>99.9%</td>
+          <td>> 10000</td>
+        </tr>
+        <tr>
+          <td>IonQ</td>
+          <td>36</td>
+          <td>~10^5</td>
+          <td>99.7%</td>
+          <td>~4000</td>
+        </tr>
+        <tr>
+          <td>PsiQuantum (光子)</td>
+          <td>模态 ~100</td>
+          <td>N/A</td>
+          <td>99.5%</td>
+          <td>建设中</td>
+        </tr>
+      </table>
+      <div class="analogy-box">
+        <h4>挑战</h4>
+        <p>• 扩展性：量子比特数 vs 连通性 vs 错误率</p>
+        <p>• 纠错开销：~1000 物理比特/逻辑比特（Surface code）</p>
+        <p>• 实用量子优势：仍需 ~10⁶ 物理比特</p>
+      </div>
+    </div>
+
+    <!-- Slide 8: Summary -->
+    <div class="slide">
+      <h2>课堂总结 / Summary</h2>
+      <div class="concept-grid">
+        <div class="concept-card">
+          <h4>1. 制冷机</h4>
+          <p>• ³He/⁴He 稀释制冷</p>
+          <p>• ~10 mK 工作温度</p>
+          <p>• P_excited ~ 10⁻¹⁰</p>
+        </div>
+        <div class="concept-card">
+          <h4>2. 读出</h4>
+          <p>• SNR = (κn̄)²/n̄_noise</p>
+          <p>• F > 99%</p>
+          <p>• HEMT + TWPA</p>
+        </div>
+        <div class="concept-card">
+          <h4>3. 纠错</h4>
+          <p>• Steane [[7,1,3]]</p>
+          <p>• Surface code</p>
+          <p>• 阈值 ~1%</p>
+        </div>
+        <div class="concept-card">
+          <h4>4. 基准</h4>
+          <p>• QV = 2^k</p>
+          <p>• 交叉熵基准</p>
+          <p>• 多平台竞争</p>
+        </div>
+      </div>
+      <div class="analogy-box" style="text-align:left;">
+        <h4>课程总结</h4>
+        <p>本课程覆盖了量子计算的基础：从量子力学原理（叠加、纠缠、隧穿）到硬件实现（Transmon、超导），从算法（Grover、Shor）到容错（纠错码）。量子计算仍处于早期阶段，但发展迅速。</p>
+      </div>
+    </div>
+
+    <!-- Controls -->
+    <div class="controls">
+      <button id="prev" onclick="navigate(-1)">← 上一页</button>
+      <span class="slide-num" id="slideNum">1 / 8</span>
+      <button id="next" onclick="navigate(1)">下一页 →</button>
+    </div>
+  </div>
+
+  <script>
+    let current = 1;
+    const totalSlides = 8;
+    function navigate(dir) {
+      const newSlide = current + dir;
+      if (newSlide < 1 || newSlide > totalSlides) return;
+      document.querySelectorAll('.slide')[current - 1].classList.remove('active');
+      document.querySelectorAll('.slide')[newSlide - 1].classList.add('active');
+      current = newSlide;
+      document.getElementById('slideNum').textContent = current + ' / ' + totalSlides;
+      document.getElementById('prev').disabled = (current === 1);
+      document.getElementById('next').disabled = (current === totalSlides);
+    }
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'ArrowRight' || e.key === ' ') navigate(1);
+      else if (e.key === 'ArrowLeft') navigate(-1);
+    });
+    document.addEventListener('DOMContentLoaded', function() {
+      if (typeof renderMathInElement === 'function') {
+        renderMathInElement(document.body, {
+          delimiters: [
+            {left: '$$', right: '$$', display: true},
+            {left: '$', right: '$', display: false}
+          ]
+        });
+      }
+    });
+  </script>
+</body>
+</html>

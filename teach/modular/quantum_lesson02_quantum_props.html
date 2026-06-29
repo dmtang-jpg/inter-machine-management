@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>第2课：电子的量子特性（上）— 薛定谔方程与自旋</title>
+  <link rel="stylesheet" href="/teach/modular/font-size-selector.js">
+  <script src="/teach/modular/pwd-check.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: #0a0e1a;
+      color: #e0e0e0;
+      font-family: 'Segoe UI', 'Microsoft YaHei', system-ui, sans-serif;
+      min-height: 100vh;
+      padding: 20px;
+      line-height: 1.6;
+    }
+    .slide-container {
+      max-width: 1100px;
+      margin: 0 auto;
+      background: linear-gradient(135deg, #0f172a 0%, #1a1a2e 100%);
+      border-radius: 12px;
+      border: 1px solid #334155;
+      overflow: hidden;
+    }
+    .slide {
+      display: none;
+      padding: 40px 48px;
+      min-height: 560px;
+      animation: fadeIn 0.3s ease-in;
+    }
+    .slide.active { display: block; }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .controls {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 14px 48px;
+      background: #1a1a2e;
+      border-top: 1px solid #334155;
+    }
+    .controls button {
+      background: #6366f1;
+      color: white;
+      border: none;
+      padding: 8px 20px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      font-family: inherit;
+    }
+    .controls button:hover { background: #4f46e5; }
+    .controls button:disabled { background: #4b5563; cursor: not-allowed; }
+    .controls .slide-num { color: #94a3b8; font-size: 14px; }
+
+    h1 { color: #60a5fa; font-size: 28px; margin-bottom: 12px; text-align: center; }
+    h2 { color: #818cf8; font-size: 22px; margin-bottom: 16px; border-bottom: 2px solid #4338ca; padding-bottom: 6px; }
+    h3 { color: #a78bfa; font-size: 18px; margin: 16px 0 8px 0; }
+    p { margin-bottom: 10px; color: #cbd5e1; font-size: 15px; }
+    .subtitle { text-align: center; color: #94a3b8; font-size: 14px; margin-bottom: 8px; }
+    .tag { display: inline-block; background: #1e293b; padding: 4px 12px; border-radius: 16px; font-size: 12px; color: #a78bfa; margin-right: 6px; border: 1px solid #6366f1; }
+
+    .concept-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin: 14px 0; }
+    .concept-card {
+      background: linear-gradient(135deg, #1e293b, #0f172a);
+      border: 1px solid #6366f1;
+      border-radius: 8px;
+      padding: 14px 18px;
+    }
+    .concept-card h4 { color: #fbbf24; font-size: 15px; margin-bottom: 6px; }
+    .concept-card p { font-size: 13px; color: #94a3b8; margin-bottom: 4px; }
+    .highlight { color: #fbbf24; font-weight: bold; }
+
+    .analogy-box {
+      background: linear-gradient(135deg, rgba(99,102,241,0.1), rgba(167,139,250,0.05));
+      border-left: 4px solid #6366f1;
+      border-radius: 0 8px 8px 0;
+      padding: 16px 20px;
+      margin: 12px 0;
+    }
+    .analogy-box h4 { color: #a78bfa; margin-bottom: 8px; }
+    .analogy-box p { font-size: 14px; }
+
+    .math-box {
+      background: linear-gradient(135deg, rgba(99,102,241,0.08), rgba(99,102,241,0.02));
+      border: 1px solid #6366f1;
+      border-radius: 8px;
+      padding: 16px 20px;
+      margin: 12px 0;
+    }
+    .math-box h4 { color: #a78bfa; margin-bottom: 8px; font-size: 15px; }
+    .math-box p { font-size: 14px; color: #cbd5e1; }
+    .formula { 
+      background: rgba(15,23,42,0.8); 
+      border-radius: 6px; 
+      padding: 10px 14px; 
+      margin: 8px 0; 
+      text-align: center;
+      font-size: 16px;
+    }
+
+    table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 14px; }
+    th { background: #1e293b; color: #fbbf24; padding: 10px 14px; text-align: left; border: 1px solid #334155; }
+    td { background: rgba(15,23,42,0.6); color: #cbd5e1; padding: 10px 14px; border: 1px solid #334155; }
+    tr:hover td { background: rgba(99,102,241,0.1); }
+
+    .quiz-box {
+      background: rgba(34,197,94,0.05);
+      border: 1px solid #22c55e;
+      border-radius: 8px;
+      padding: 16px 20px;
+      margin: 14px 0;
+    }
+    .quiz-box h4 { color: #4ade80; margin-bottom: 8px; }
+    .quiz-box label { display: block; margin: 6px 0; cursor: pointer; }
+    .quiz-box input { margin-right: 8px; }
+    .quiz-box button {
+      background: #16a34a; color: white; border: none; padding: 6px 16px;
+      border-radius: 6px; cursor: pointer; margin-top: 6px;
+    }
+    .quiz-result { margin-top: 10px; padding: 8px 12px; border-radius: 4px; display: none; }
+    .quiz-result.correct { background: rgba(34,197,94,0.15); color: #4ade80; border: 1px solid #22c55e; }
+    .quiz-result.wrong { background: rgba(239,68,68,0.15); color: #f87171; border: 1px solid #ef4444; }
+
+    canvas {
+      background: #0a0e1a;
+      border: 1px solid #334155;
+      border-radius: 8px;
+      display: block;
+      margin: 12px auto;
+    }
+
+    .three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin: 12px 0; }
+    .viz-card {
+      text-align: center;
+      background: rgba(15,23,42,0.5);
+      border-radius: 8px;
+      padding: 14px;
+      border: 1px solid #334155;
+    }
+    .viz-icon { font-size: 36px; margin-bottom: 6px; }
+    .viz-label { font-size: 13px; color: #94a3b8; }
+
+    .correct { color: #4ade80; }
+    .wrong { color: #f87171; }
+
+    .compare-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 12px 0; }
+    .compare-col {
+      background: rgba(15,23,42,0.5);
+      border-radius: 8px;
+      padding: 16px;
+      border: 1px solid #334155;
+    }
+    .compare-col h4 { margin-bottom: 8px; }
+    .compare-col p { font-size: 13px; margin: 4px 0; }
+    .compare-col.classical { border-color: #fbbf24; }
+    .compare-col.classical h4 { color: #fbbf24; }
+    .compare-col.quantum { border-color: #6366f1; }
+    .compare-col.quantum h4 { color: #6366f1; }
+
+    .wave-demo { text-align: center; }
+    .wave-demo canvas { width: 100%; max-width: 800px; }
+
+    .matrix-display {
+      font-family: 'Courier New', monospace;
+      background: rgba(15,23,42,0.8);
+      border-radius: 6px;
+      padding: 8px 12px;
+      margin: 6px 0;
+      font-size: 14px;
+      color: #a78bfa;
+    }
+  </style>
+</head>
+<body>
+  <div class="slide-container">
+    <!-- Slide 1: Title -->
+    <div class="slide active">
+      <div class="subtitle">量子计算入门 · 第2课 / Quantum Computing Lesson 2</div>
+      <h1>电子的量子特性（上）<br><span style="font-size:18px;color:#94a3b8;">薛定谔方程与自旋½系统</span></h1>
+      <div class="concept-grid" style="grid-template-columns: 1fr;">
+        <div class="concept-card">
+          <h4>学习目标 / Learning Objectives</h4>
+          <p>1. 掌握含时薛定谔方程及其物理意义</p>
+          <p>2. 理解一维无限深势阱的解析解</p>
+          <p>3. 掌握自旋½系统的泡利矩阵表示</p>
+          <p>4. 理解波函数的概率诠释与测量坍缩</p>
+    <p style="color:#94a3b8;font-size:12px;margin-top:8px;">
+      <b>课前预习：</b><a href="quantum_prerequisites.html#complex" style="color:#818cf8;">复数与欧拉公式</a> · <a href="quantum_prerequisites.html#hermitian" style="color:#818cf8;">厄米算符</a> · <a href="quantum_prerequisites.html#time-evolution" style="color:#818cf8;">时间演化</a>
+    </p>
+        </div>
+      </div>
+      <p align="center" style="margin-top:20px;color:#a78bfa;">
+        <b>教学方式</b>：讲授 · 可视化演示 · 互动问答 / <b>课时</b>：45分钟
+      </p>
+    </div>
+
+    <!-- Slide 2: Schrödinger Equation -->
+    <div class="slide">
+      <h2>含时薛定谔方程 / Time-Dependent Schrödinger Equation</h2>
+      <div class="math-box">
+        <h4>基本形式 / Fundamental Form</h4>
+        <div class="formula">
+          iℏ $\frac{\partial}{\partial t}$ |ψ(t)⟩ = Ĥ |ψ(t)⟩
+        </div>
+        <p>i 是虚数单位，ℏ = h/(2π) 是约化普朗克常数，Ĥ 是哈密顿算符。</p>
+      </div>
+      <div class="concept-grid">
+        <div class="concept-card">
+          <h4>哈密顿算符 / Hamiltonian</h4>
+          <p>Ĥ = -ℏ²/(2m) ∇² + V(r)</p>
+          <p>动能项 + 势能项</p>
+        </div>
+        <div class="concept-card">
+          <h4>波函数 / Wave Function</h4>
+          <p>|ψ(t)⟩ 是 Hilbert 空间中的矢量</p>
+          <p>描述量子系统的完整状态</p>
+        </div>
+      </div>
+      <div class="analogy-box">
+        <h4>物理意义 / Physical Meaning</h4>
+        <p>薛定谔方程是量子力学的"牛顿第二定律"——给定初始状态 |ψ(0)⟩，可以计算未来任意时刻的状态。</p>
+        <p>它是确定性的！随机性只在测量时出现。</p>
+      </div>
+    </div>
+
+    <!-- Slide 3: 1D Infinite Square Well -->
+    <div class="slide">
+      <h2>一维无限深势阱 / 1D Infinite Square Well</h2>
+      <p>最简单的量子力学问题：电子被限制在 0 到 L 的区域内，势能 V=0；区域外 V=∞。</p>
+      <div class="math-box">
+        <h4>定态薛定谔方程 / Time-Independent SE</h4>
+        <div class="formula">
+          -$\frac{ℏ^2}{2m} \frac{d^2 \psi_n(x)}{dx^2} = E_n \psi_n(x)$
+        </div>
+        <p>边界条件：ψ(0) = ψ(L) = 0</p>
+      </div>
+      <div class="math-box">
+        <h4>解析解 / Analytical Solution</h4>
+        <div class="formula">
+          ψ<sub>n</sub>(x) = $\sqrt{\frac{2}{L}} \sin\left(\frac{n\pi x}{L}\right)$,　
+          E<sub>n</sub> = $\frac{n^2 \pi^2 ℏ^2}{2mL^2}$,　 n = 1,2,3,...
+        </div>
+        <p>n 是量子数，E_n 是能量本征值。能量是离散的（量子化）！</p>
+      </div>
+      <div style="display:flex;justify-content:center;">
+        <canvas id="wellCanvas" width="700" height="320"></canvas>
+      </div>
+      <p style="text-align:center; color:#94a3b8; font-size:12px;">
+        前三个能级的波函数 ψₙ(x) 和概率密度 |ψₙ(x)|²
+      </p>
+    </div>
+
+    <!-- Slide 4: Quantization & Standing Waves -->
+    <div class="slide">
+      <h2>能量量子化 / Energy Quantization</h2>
+      <div class="analogy-box">
+        <h4>驻波类比 / Standing Wave Analogy</h4>
+        <p>吉他弦两端固定，只能以特定频率振动：f_n = nv/(2L)</p>
+        <p>电子波函数在有限空间内，也只允许特定频率的驻波模式存在。</p>
+        <p>这就是能量量子化的起源：边界条件 → 驻波条件 → 离散谱</p>
+      </div>
+      <div class="concept-grid">
+        <div class="concept-card">
+          <h4>零点能 / Zero-Point Energy</h4>
+          <p>最低能量 E₁ = π²ℏ²/(2mL²) ≠ 0</p>
+          <p>海森堡不确定性原理：位置越确定，动量越不确定</p>
+        </div>
+        <div class="concept-card">
+          <h4>能级间距 / Energy Spacing</h4>
+          <p>ΔE = E_{n+1} - E_n = (2n+1)π²ℏ²/(2mL²)</p>
+          <p>n 越大，间距越大（与 n 成正比）</p>
+        </div>
+      </div>
+      <div class="quiz-box">
+        <h4>思考题：</h4>
+        <p>若电子被限制在 L=1nm 的区域内，基态能量约为多少？（m_e = 9.1×10⁻³¹ kg, ℏ = 1.05×10⁻³⁴ J·s）</p>
+        <p style="color:#94a3b8; font-size:13px;">提示：E₁ = π²ℏ²/(2mL²) ≈ 6×10⁻²⁰ J ≈ 0.4 eV</p>
+      </div>
+    </div>
+
+    <!-- Slide 5: Spin-1/2 System -->
+    <div class="slide">
+      <h2>自旋½系统 / Spin-½ System</h2>
+      <p>电子的内禀角动量（自旋）是量子化的，只能取两个值：</p>
+      <div class="math-box">
+        <h4>自旋算符 / Spin Operators</h4>
+        <div class="formula">
+          Ŝ² |s,m⟩ = ℏ² s(s+1) |s,m⟩,　 Ŝ_z |s,m⟩ = ℏm |s,m⟩
+        </div>
+        <p>对于电子：s = 1/2，m = ±1/2</p>
+        <div class="formula">
+          |↑⟩ = |+½⟩,　 |↓⟩ = |-½⟩
+        </div>
+      </div>
+      <div class="math-box">
+        <h4>泡利矩阵 / Pauli Matrices</h4>
+        <div class="matrix-display">
+          σ_x = $\begin{pmatrix} 0 & 1 \\ 1 & 0 \end{pmatrix}$,　
+          σ_y = $\begin{pmatrix} 0 & -i \\ i & 0 \end{pmatrix}$,　
+          σ_z = $\begin{pmatrix} 1 & 0 \\ 0 & -1 \end{pmatrix}$
+        </div>
+        <p>Ŝ_i = (ℏ/2) σ_i，满足对易关系 [σ_i, σ_j] = 2iε_{ijk}σ_k</p>
+      </div>
+      <div class="state-viz">
+        <div class="state-box">
+          <div class="label">自旋向上 Spin up</div>
+          <div class="value">|↑⟩ = $\begin{pmatrix}1\\0\end{pmatrix}$</div>
+        </div>
+        <div class="state-box">
+          <div class="label">自旋向下 Spin down</div>
+          <div class="value">|↓⟩ = $\begin{pmatrix}0\\1\end{pmatrix}$</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 6: Three Visualizations of Electron -->
+    <div class="slide">
+      <h2>电子的三种形象 / Three Visualizations of Electron</h2>
+      <p>科学家为了描述电子创造了三种可视化形象。请注意，这三者都<strong>不是</strong>电子的真实样子：</p>
+      <div class="three-col">
+        <div class="viz-card">
+          <div class="viz-icon">🔴</div>
+          <h4>球状粒子</h4>
+          <p class="wrong">✗ 错误</p>
+          <p style="font-size:12px;color:#94a3b8;">电子没有确定的大小</p>
+        </div>
+        <div class="viz-card">
+          <div class="viz-icon">🌊</div>
+          <h4>经典波</h4>
+          <p style="color:#fbbf24;">部分正确</p>
+          <p style="font-size:12px;color:#94a3b8;">是概率波，不是物质波</p>
+        </div>
+        <div class="viz-card">
+          <div class="viz-icon">☁️</div>
+          <h4>概率云</h4>
+          <p class="correct">✓ 最准确</p>
+          <p style="font-size:12px;color:#94a3b8;">中心浓→边缘淡=概率密度</p>
+        </div>
+      </div>
+      <div class="analogy-box">
+        <h4>关键澄清</h4>
+        <p>这不是"不知道在哪"，而是电子<strong>真的同时存在于多个地方</strong>。</p>
+        <p>电子在双缝实验中确实同时穿过两条缝——这是实验事实，不是理论推测。</p>
+      </div>
+    </div>
+
+    <!-- Slide 7: Double Slit -->
+    <div class="slide">
+      <h2>双缝实验：电子真的同时穿过两条缝</h2>
+      <div style="display:flex;justify-content:center;">
+        <canvas id="doubleSlitCanvas" width="700" height="280"></canvas>
+      </div>
+      <div class="compare-grid">
+        <div class="compare-col classical">
+          <h4>经典预期</h4>
+          <p>• 电子是粒子</p>
+          <p>• 只穿过一条缝</p>
+          <p>• 屏幕显示两条线</p>
+        </div>
+        <div class="compare-col quantum">
+          <h4>量子实际</h4>
+          <p>• 电子是概率波</p>
+          <p>• 同时穿过两条缝</p>
+          <p>• 屏幕显示干涉条纹</p>
+        </div>
+      </div>
+      <div class="analogy-box" style="background: rgba(248,113,113,0.05); border-color: #ef4444;">
+        <h4 style="color:#f87171;">⚠️ 观测会破坏干涉</h4>
+        <p>如果我们用探测器观测电子穿过哪条缝，干涉条纹就会消失！</p>
+        <p>观测（光子与电子相互作用）破坏了叠加态 → 坍缩</p>
+      </div>
+    </div>
+
+    <!-- Slide 8: Measurement Collapse -->
+    <div class="slide">
+      <h2>测量与坍缩 / Measurement & Collapse</h2>
+      <div class="compare-grid">
+        <div class="compare-col classical">
+          <h4>经典世界：抛硬币</h4>
+          <p>• 硬币在空中旋转</p>
+          <p>• 结果已确定（隐变量）</p>
+          <p>• 我们只是不知道</p>
+          <p>• 接住 → 看到结果</p>
+        </div>
+        <div class="compare-col quantum">
+          <h4>量子世界：电子自旋</h4>
+          <p>• 电子同时是↑和↓</p>
+          <p>• 结果真的未确定</p>
+          <p>• 贝尔不等式已证实</p>
+          <p>• 测量 → 迫使选择</p>
+        </div>
+      </div>
+      <div class="math-box">
+        <h4>测量公设 / Measurement Postulate</h4>
+        <div class="formula">
+          测量可观测量 A，得到本征值 a_n 的概率 = |⟨a_n|ψ⟩|²
+        </div>
+        <p>测量后，系统坍缩到对应的本征态 |a_n⟩。这就是波恩定则（Born rule）。</p>
+      </div>
+    </div>
+
+    <!-- Slide 9: Qubit Physical Carrier -->
+    <div class="slide">
+      <h2>量子比特的物理载体 / Physical Carriers of Qubits</h2>
+      <p>电子的量子特性如何用来编码 0 和 1？</p>
+      <div class="concept-grid">
+        <div class="concept-card">
+          <h4>电子自旋</h4>
+          <p>↑ 自旋向上 → |0⟩</p>
+          <p>↓ 自旋向下 → |1⟩</p>
+          <p>⚠️ 电子没有大小，"自旋"是内禀属性</p>
+        </div>
+        <div class="concept-card">
+          <h4>原子能级</h4>
+          <p>E₀ 基态 → |0⟩</p>
+          <p>E₁ 激发态 → |1⟩</p>
+          <p>能量离散 = 楼梯 vs 斜坡</p>
+        </div>
+      </div>
+      <div class="analogy-box">
+        <h4>为什么能量是离散的？</h4>
+        <p>电子的波函数在有限空间内，只允许特定频率的驻波模式存在。</p>
+        <p>就像吉他弦只能以特定频率振动（基频、2倍频、3倍频……）</p>
+      </div>
+    </div>
+
+    <!-- Slide 10: Quiz -->
+    <div class="slide">
+      <h2>课堂互动：辨析题</h2>
+      <div class="quiz-box">
+        <h4>问题1：电子在双缝实验中</h4>
+        <label><input type="radio" name="q1" value="wrong"> A. 电子作为粒子只能穿过一条缝</label>
+        <label><input type="radio" name="q1" value="correct"> B. 电子作为概率波同时穿过两条缝，形成干涉</label>
+        <label><input type="radio" name="q1" value="wrong"> C. 电子随机选择一条缝穿过</label>
+        <button onclick="checkQuiz1()">检查答案</button>
+        <div id="quiz-result-1" class="quiz-result"></div>
+      </div>
+      <div class="quiz-box">
+        <h4>问题2：测量电子自旋之前</h4>
+        <label><input type="radio" name="q2" value="wrong"> A. 自旋是确定的，只是我们不知道（经典观点）</label>
+        <label><input type="radio" name="q2" value="correct"> B. 自旋真的同时是向上和向下（量子观点）</label>
+        <label><input type="radio" name="q2" value="wrong"> C. 取决于观测者的意识</label>
+        <button onclick="checkQuiz2()">检查答案</button>
+        <div id="quiz-result-2" class="quiz-result"></div>
+      </div>
+    </div>
+
+    <!-- Slide 11: Summary -->
+    <div class="slide">
+      <h2>课堂总结 / Summary</h2>
+      <div class="concept-grid">
+        <div class="concept-card">
+          <h4>1. 薛定谔方程</h4>
+          <p>• iℏ ∂|ψ⟩/∂t = Ĥ|ψ⟩</p>
+          <p>• 确定性演化，随机性在测量</p>
+        </div>
+        <div class="concept-card">
+          <h4>2. 无限深势阱</h4>
+          <p>• ψ_n(x) = √(2/L) sin(nπx/L)</p>
+          <p>• E_n = n²π²ℏ²/(2mL²)</p>
+        </div>
+        <div class="concept-card">
+          <h4>3. 自旋½</h4>
+          <p>• 泡利矩阵 σ_x, σ_y, σ_z</p>
+          <p>• |↑⟩, |↓⟩ 两个本征态</p>
+        </div>
+        <div class="concept-card">
+          <h4>4. 测量坍缩</h4>
+          <p>• 概率 = |⟨a_n|ψ⟩|²</p>
+          <p>• 测量后坍缩到本征态</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 12: Homework -->
+    <div class="slide" style="text-align:center;">
+      <h2>课后作业 / Homework</h2>
+      <div class="quiz-box" style="text-align:left;">
+        <h4>必做作业</h4>
+        <p>1. 证明：一维无限深势阱的波函数满足归一化条件 ∫₀ᴸ |ψ_n(x)|² dx = 1。</p>
+        <p>2. 计算电子自旋在 z 方向测量时，若处于 |ψ⟩ = (3|↑⟩ + 4i|↓⟩)/5，得到 +ℏ/2 的概率是多少？</p>
+        <p>3. 用 Desmos 绘制一维无限深势阱中电子的波函数 |ψₙ(x)|²，观察量子数 n 增大时概率分布如何变化。</p>
+        <p>4. 思考题：量子纠缠和量子叠加有什么区别和联系？</p>
+      </div>
+      <div class="analogy-box" style="text-align:left;">
+        <h4>下节课预告</h4>
+        <p>第3课：电子的量子特性（下）—— 量子纠缠与贝尔不等式</p>
+        <p>我们将探讨：两个粒子如何强关联？贝尔不等式如何证明量子力学非经典？</p>
+      </div>
+    </div>
+
+    <!-- Controls -->
+    <div class="controls">
+      <button id="prev" onclick="navigate(-1)">← 上一页</button>
+      <span class="slide-num" id="slideNum">1 / 12</span>
+      <button id="next" onclick="navigate(1)">下一页 →</button>
+    </div>
+  </div>
+
+  <script>
+    let current = 1;
+    const total = 12;
+
+    function navigate(dir) {
+      const newSlide = current + dir;
+      if (newSlide < 1 || newSlide > total) return;
+      const slides = document.querySelectorAll('.slide');
+      slides[current - 1].classList.remove('active');
+      slides[newSlide - 1].classList.add('active');
+      current = newSlide;
+      document.getElementById('slideNum').textContent = current + ' / ' + total;
+      document.getElementById('prev').disabled = (current === 1);
+      document.getElementById('next').disabled = (current === total);
+      if (current === 3) drawWell();
+      if (current === 7) drawDoubleSlit();
+    }
+
+    function checkQuiz1() {
+      const result = document.getElementById('quiz-result-1');
+      const selected = document.querySelector('input[name="q1"]:checked');
+      if (!selected) { result.style.display = 'block'; result.className = 'quiz-result wrong'; result.textContent = '请选择一个选项'; return; }
+      if (selected.value === 'correct') {
+        result.style.display = 'block'; result.className = 'quiz-result correct';
+        result.innerHTML = '<b>正确！</b>电子作为概率波同时穿过两条缝，形成干涉条纹。这是量子力学的核心实验事实。';
+      } else {
+        result.style.display = 'block'; result.className = 'quiz-result wrong';
+        result.innerHTML = '<b>错误。</b>电子不是经典粒子，而是概率波，会同时穿过两条缝并产生干涉。';
+      }
+    }
+
+    function checkQuiz2() {
+      const result = document.getElementById('quiz-result-2');
+      const selected = document.querySelector('input[name="q2"]:checked');
+      if (!selected) { result.style.display = 'block'; result.className = 'quiz-result wrong'; result.textContent = '请选择一个选项'; return; }
+      if (selected.value === 'correct') {
+        result.style.display = 'block'; result.className = 'quiz-result correct';
+        result.innerHTML = '<b>正确！</b>量子纠缠实验排除了"隐藏变量"理论，测量前结果真的未确定。';
+      } else {
+        result.style.display = 'block'; result.className = 'quiz-result wrong';
+        result.innerHTML = '<b>错误。</b>贝尔不等式实验已证实：测量前结果真的未确定，不是我们不知道。';
+      }
+    }
+
+    // Draw infinite square well
+    function drawWell() {
+      const canvas = document.getElementById('wellCanvas');
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      const W = canvas.width, H = canvas.height;
+      ctx.clearRect(0, 0, W, H);
+      
+      const L = 500, x0 = 100, yBase = H - 50;
+      const colors = ['#6366f1', '#a78bfa', '#fbbf24'];
+      
+      // Draw well
+      ctx.strokeStyle = '#334155';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(x0, yBase);
+      ctx.lineTo(x0, 50);
+      ctx.moveTo(x0 + L, yBase);
+      ctx.lineTo(x0 + L, 50);
+      ctx.moveTo(x0, yBase);
+      ctx.lineTo(x0 + L, yBase);
+      ctx.stroke();
+      
+      // Draw energy levels and wave functions
+      for (let n = 1; n <= 3; n++) {
+        const E = n * n;
+        const yLevel = yBase - E * 15;
+        
+        // Energy level line
+        ctx.strokeStyle = '#4b5563';
+        ctx.setLineDash([3, 3]);
+        ctx.beginPath();
+        ctx.moveTo(x0, yLevel);
+        ctx.lineTo(x0 + L, yLevel);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        
+        // Wave function
+        ctx.strokeStyle = colors[n-1];
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        for (let x = 0; x <= L; x += 2) {
+          const t = x / L;
+          const psi = Math.sqrt(2/L) * Math.sin(n * Math.PI * t) * 30;
+          const px = x0 + x;
+          const py = yLevel - psi;
+          if (x === 0) ctx.moveTo(px, py);
+          else ctx.lineTo(px, py);
+        }
+        ctx.stroke();
+        
+        // Probability density (filled)
+        ctx.fillStyle = colors[n-1] + '20';
+        ctx.beginPath();
+        ctx.moveTo(x0, yLevel);
+        for (let x = 0; x <= L; x += 2) {
+          const t = x / L;
+          const prob = (2/L) * Math.pow(Math.sin(n * Math.PI * t), 2) * 80;
+          const px = x0 + x;
+          const py = yLevel - prob;
+          ctx.lineTo(px, py);
+        }
+        ctx.lineTo(x0 + L, yLevel);
+        ctx.closePath();
+        ctx.fill();
+        
+        // Label
+        ctx.fillStyle = colors[n-1];
+        ctx.font = '12px sans-serif';
+        ctx.fillText(`n=${n}, E_${n}=${n}²π²ℏ²/2mL²`, x0 + L + 10, yLevel + 4);
+      }
+      
+      // Labels
+      ctx.fillStyle = '#94a3b8';
+      ctx.font = '12px sans-serif';
+      ctx.fillText('ψ(x)', x0 - 30, 60);
+      ctx.fillText('E', x0 - 30, H - 45);
+      ctx.fillText('L', x0 + L/2, yBase + 20);
+    }
+
+    // Draw double slit experiment
+    function drawDoubleSlit() {
+      const canvas = document.getElementById('doubleSlitCanvas');
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      const W = canvas.width, H = canvas.height;
+      ctx.clearRect(0, 0, W, H);
+      
+      const slitX = 250, screenX = 600;
+      const slitGap = 60;
+      
+      // Source
+      ctx.fillStyle = '#fbbf24';
+      ctx.beginPath();
+      ctx.arc(80, H/2, 8, 0, 2 * Math.PI);
+      ctx.fill();
+      ctx.fillStyle = '#94a3b8';
+      ctx.font = '11px sans-serif';
+      ctx.fillText('电子源', 60, H/2 + 25);
+      
+      // Barrier with slits
+      ctx.strokeStyle = '#64748b';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(slitX, 0);
+      ctx.lineTo(slitX, H/2 - slitGap/2);
+      ctx.moveTo(slitX, H/2 - slitGap/2 + slitGap);
+      ctx.lineTo(slitX, H);
+      ctx.stroke();
+      
+      // Screen
+      ctx.strokeStyle = '#4ade80';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(screenX, 0);
+      ctx.lineTo(screenX, H);
+      ctx.stroke();
+      
+      // Interference pattern on screen
+      const pattern = [];
+      for (let y = 0; y < H; y++) {
+        const d1 = Math.sqrt(Math.pow(slitX - 80, 2) + Math.pow(H/2 - (H/2 - slitGap/2), 2)) + Math.sqrt(Math.pow(screenX - slitX, 2) + Math.pow(y - (H/2 - slitGap/2), 2));
+        const d2 = Math.sqrt(Math.pow(slitX - 80, 2) + Math.pow(H/2 - (H/2 + slitGap/2), 2)) + Math.sqrt(Math.pow(screenX - slitX, 2) + Math.pow(y - (H/2 + slitGap/2), 2));
+        const phase = (d1 - d2) * 0.1;
+        const intensity = Math.pow(Math.cos(phase), 2);
+        pattern.push(intensity);
+        
+        ctx.fillStyle = `rgba(74, 222, 128, ${intensity})`;
+        ctx.fillRect(screenX + 2, y, 20, 1);
+      }
+      
+      // Draw some wave lines
+      ctx.strokeStyle = '#6366f180';
+      ctx.lineWidth = 1;
+      for (let y0 of [H/2 - slitGap/2, H/2 + slitGap/2]) {
+        ctx.beginPath();
+        ctx.moveTo(80, H/2);
+        for (let x = 80; x < slitX; x += 2) {
+          const t = (x - 80) / (slitX - 80);
+          const y = H/2 + (y0 - H/2) * t + Math.sin(t * 15) * 5;
+          ctx.lineTo(x, y);
+        }
+        ctx.stroke();
+        
+        ctx.beginPath();
+        ctx.moveTo(slitX, y0);
+        for (let x = slitX; x < screenX; x += 2) {
+          const t = (x - slitX) / (screenX - slitX);
+          const y = y0 + Math.sin(t * 20 + y0) * 15;
+          ctx.lineTo(x, y);
+        }
+        ctx.stroke();
+      }
+      
+      // Labels
+      ctx.fillStyle = '#94a3b8';
+      ctx.font = '11px sans-serif';
+      ctx.fillText('双缝', slitX - 10, H - 10);
+      ctx.fillText('屏幕', screenX - 10, H - 10);
+      ctx.fillText('干涉条纹 →', screenX + 25, H/2);
+    }
+
+    // Keyboard navigation
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'ArrowRight' || e.key === ' ') navigate(1);
+      else if (e.key === 'ArrowLeft') navigate(-1);
+    });
+
+    // Initialize KaTeX
+    document.addEventListener('DOMContentLoaded', function() {
+      renderMath(document.body);
+    });
+
+    function renderMath(container) {
+      const mathElements = container.querySelectorAll('.formula, .matrix-display');
+      mathElements.forEach(el => {
+        if (!el.dataset.katexRendered) {
+          const spans = el.querySelectorAll('span.math');
+          spans.forEach(span => {
+            if (!span.dataset.katexRendered) {
+              katex.render(span.textContent, span, { throwOnError: false, displayMode: span.classList.contains('katex-display') });
+              span.dataset.katexRendered = 'true';
+            }
+          });
+          el.dataset.katexRendered = 'true';
+        }
+      });
+    }
+  </script>
+</body>
+</html>
