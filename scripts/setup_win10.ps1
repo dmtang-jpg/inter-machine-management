@@ -28,6 +28,18 @@ try {
     Write-Host "  [OK] WinRM 已启用 (5985)" -ForegroundColor Green
 } catch { Write-Host "  [WARN] WinRM: $_" -ForegroundColor Yellow }
 
+# ---- 1b. 创建本地管理员账户（远程管理专用）----
+Write-Host "=== [1b/9] 创建远程管理账户 ===" -ForegroundColor Green
+try {
+    # Microsoft 账户无法用 WinRM/SSH basic 认证，必须建本地账户
+    # 账户: hermes_admin  密码: njuee366
+    net user hermes_admin njuee366 /add 2>$null | Out-Null
+    net localgroup administrators hermes_admin /add 2>$null | Out-Null
+    # 允许空密码远程（防止本地安全策略拦截）
+    Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Lsa" -Name "LimitBlankPasswordUse" -Value 0 -Type DWord -Force
+    Write-Host "  [OK] 本地管理员 hermes_admin 已创建" -ForegroundColor Green
+} catch { Write-Host "  [WARN] 创建账户: $_" -ForegroundColor Yellow }
+
 # ---- 2. 开启远程桌面 (可选) ----
 Write-Host "=== [2/9] 开启远程桌面 ===" -ForegroundColor Green
 try {
