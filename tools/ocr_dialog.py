@@ -11,7 +11,7 @@
 适用: 系统弹窗、报错弹窗、软件界面截图、VNC 截图
 验证: 2026-08-01 实测中文弹窗 100% 识别（Noto CJK 字体 + 预处理）
 """
-import sys, os, subprocess, argparse, tempfile
+import sys, subprocess, argparse
 
 def ensure_pil():
     """确保 Pillow 可用"""
@@ -43,7 +43,8 @@ def preprocess(img, scale=3, contrast=2.0, sharpen=1.5):
 
 def ocr(img_path, lang='chi_sim+eng', psm=6):
     """OCR 识别"""
-    import pytesseract, os
+    import pytesseract
+    import os
     if not os.path.exists(img_path):
         print(f"❌ 文件不存在: {img_path}", file=sys.stderr)
         sys.exit(1)

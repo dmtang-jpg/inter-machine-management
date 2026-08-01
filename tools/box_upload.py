@@ -9,6 +9,7 @@
     - 绕代理 (trust_env=False), 否则 HTTP_PROXY 劫持导致断连
 """
 import sys
+from urllib.parse import quote as urlquote
 import requests
 import urllib3
 
@@ -32,8 +33,8 @@ def upload(local_path: str, target_dir: str) -> str:
     token = r.json()["token"]
     s.headers["Authorization"] = f"Token {token}"
 
-    # 2. 拿上传链接 (GET + p=目标目录)
-    r = s.get(f"{BASE}/api2/repos/{REPO_ID}/upload-link/?p={target_dir}", timeout=30)
+    # 2. 拿上传链接 (GET + p=目标目录, 中文路径需 URL 编码)
+    r = s.get(f"{BASE}/api2/repos/{REPO_ID}/upload-link/?p={urlquote(target_dir)}", timeout=30)
     r.raise_for_status()
     upload_url = r.text.strip().strip('"')
 

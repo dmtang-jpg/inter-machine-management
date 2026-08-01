@@ -11,10 +11,12 @@
 """
 import base64
 import json
+import os
 import subprocess
 import sys
 import tempfile
 import time
+import urllib.error
 import urllib.request
 
 SERVER = "http://10.218.208.65:8091/v1/chat/completions"  # 本机 VLM 服务（内网 IP，同网段 agent 可直接访问）
@@ -47,14 +49,24 @@ def ask(image_path: str, question: str = DEFAULT_Q, max_tokens: int = 500,
     # 绕过环境变量代理: 用直接 opener
     opener = urllib.request.build_opener(urllib.request.ProxyHandler({}))
     t0 = time.time()
-    resp = json.loads(opener.open(req, timeout=timeout).read())
+    try:
+        resp = json.loads(opener.open(req, timeout=timeout).read())
+    except urllib.error.URLError as e:
+        raise RuntimeError(
+            f"❌ 无法连接 VLM 服务 {SERVER}（{e.reason}）。"
+            f"请确认服务在线: curl -s {SERVER.replace('/v1/chat/completions', '/health')}") from e
+    except Exception as e:
+        raise RuntimeError(f"❌ VLM 请求失败: {e}") from e
     dt = time.time() - t0
     text = resp["choices"][0]["message"]["content"]
     return f"[耗时 {dt:.1f}s]\n{text}"
 
 
 def grab_screen(tmp_path: str) -> str:
-    subprocess.run(["scrot", tmp_path], check=True)
+    try:
+        subprocess.run(["scrot", tmp_path], check=True, timeout=15)
+    except (FileNotFoundError, subprocess.TimeoutExpired, subprocess.CalledProcessError) as e:
+        raise RuntimeError(f"❌ 截屏失败（scrot 不可用?）: {e}") from e
     return tmp_path
 
 
@@ -63,14 +75,21 @@ if __name__ == "__main__":
     if not args:
         print(__doc__)
         sys.exit(1)
-    if args[0] == "--screen":
-        question = args[1] if len(args) > 1 else DEFAULT_Q
-        with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as tf:
-            shot = tf.name
-        grab_screen(shot)
-        print(f"[已截屏: {shot}]")
-        print(ask(shot, question))
-    else:
-        img = args[0]
-        question = args[1] if len(args) > 1 else DEFAULT_Q
-        print(ask(img, question))
+    try:
+        if args[0] == "--screen":
+            question = args[1] if len(args) > 1 else DEFAULT_Q
+            with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as tf:
+                shot = tf.name
+            grab_screen(shot)
+            print(f"[已截屏: {shot}]")
+            print(ask(shot, question))
+        else:
+            img = args[0]
+            if not os.path.exists(img):
+                print(f"❌ 文件不存在: {img}", file=sys.stderr)
+                sys.exit(1)
+            question = args[1] if len(args) > 1 else DEFAULT_Q
+            print(ask(img, question))
+    except RuntimeError as e:
+        print(e, file=sys.stderr)
+        sys.exit(1)
