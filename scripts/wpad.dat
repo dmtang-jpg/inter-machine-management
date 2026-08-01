@@ -1,0 +1,110 @@
+function FindProxyForURL(url, host) {
+    // ===== LOCAL NETWORK - Direct =====
+    if (isPlainHostName(host) ||
+        dnsDomainIs(host, ".local") ||
+        shExpMatch(host, "127.*") ||
+        shExpMatch(host, "10.*") ||
+        shExpMatch(host, "172.16.*") ||
+        shExpMatch(host, "172.17.*") ||
+        shExpMatch(host, "172.18.*") ||
+        shExpMatch(host, "172.19.*") ||
+        shExpMatch(host, "172.2?.*") ||
+        shExpMatch(host, "172.30.*") ||
+        shExpMatch(host, "172.31.*") ||
+        shExpMatch(host, "192.168.*") ||
+        shExpMatch(host, "169.254.*") ||
+        shExpMatch(host, "100.64.*") ||
+        shExpMatch(host, "100.6?.*") ||
+        shExpMatch(host, "100.7?.*") ||
+        shExpMatch(host, "100.8?.*") ||
+        shExpMatch(host, "100.9?.*") ||
+        shExpMatch(host, "100.10?.*") ||
+        shExpMatch(host, "100.11?.*") ||
+        shExpMatch(host, "100.12?.*") ||
+        shExpMatch(host, "224.*") ||
+        shExpMatch(host, "240.*")) {
+        return "DIRECT";
+    }
+
+    // ===== CHINESE DOMAINS - Direct (performance) =====
+    if (dnsDomainIs(host, ".cn") ||
+        dnsDomainIs(host, ".com.cn") ||
+        dnsDomainIs(host, ".org.cn") ||
+        dnsDomainIs(host, ".net.cn") ||
+        dnsDomainIs(host, ".edu.cn") ||
+        dnsDomainIs(host, ".gov.cn")) {
+        return "DIRECT";
+    }
+
+    // ===== GFW / BLOCKED SITES - Proxy =====
+    var blocked = [
+        "google.com", "google.com.hk", "google.com.tw", "googleapis.com",
+        "gstatic.com", "googlevideo.com", "ggpht.com", "youtube.com",
+        "ytimg.com", "youtu.be", "blogger.com", "blogspot.com",
+        "facebook.com", "fbcdn.net", "fb.com", "instagram.com",
+        "twitter.com", "twimg.com", "t.co", "x.com",
+        "wikipedia.org", "wikimedia.org", "wiktionary.org",
+        "reddit.com", "redd.it", "redditmedia.com",
+        "telegram.org", "t.me", "telegram.me",
+        "dropbox.com", "dropboxusercontent.com",
+        "onedrive.live.com", "1drv.ms",
+        "github.com", "github.io", "githubassets.com",
+        "gitlab.com", "bitbucket.org",
+        "stackoverflow.com", "stackexchange.com",
+        "medium.com", "quora.com",
+        "bbc.com", "bbc.co.uk", "nytimes.com", "wsj.com",
+        "voanews.com", "rfa.org", "dw.com",
+        "openai.com", "chatgpt.com", "claude.ai",
+        "anthropic.com", "huggingface.co",
+        "discord.com", "discord.gg", "discordapp.com",
+        "whatsapp.com", "whatsapp.net",
+        "line.me", "line-apps.com",
+        "spotify.com", "scdn.co",
+        "netflix.com", "nflxvideo.net", "nflximg.com",
+        "vimeo.com", "vimeocdn.com",
+        "dailymotion.com", "dmcdn.net",
+        "twitch.tv", "ttvnw.net",
+        "archive.org", "archive.is",
+        "pastebin.com", "paste.ee",
+        "deepl.com",
+        "duckduckgo.com",
+        "docker.com", "docker.io",
+        "pypi.org", "pythonhosted.org",
+        "npmjs.com", "npmjs.org",
+        "rust-lang.org", "crates.io",
+        "golang.org", "go.dev",
+        "cloudflare.com", "cloudflare-dns.com",
+        "akamaihd.net", "akamai.net",
+        "fastly.net", "fastlylb.net",
+        "appspot.com",
+        "amazon.com", "aws.amazon.com",
+        "digitalocean.com",
+        "vultr.com", "linode.com",
+        "namecheap.com", "godaddy.com",
+        "paypal.com", "paypalobjects.com",
+        "stripe.com",
+        "slack.com", "slack-edge.com",
+        "zoom.us", "zoom.com",
+        "notion.so", "notion.com",
+        "figma.com", "figma.io",
+        "canva.com", "canva.cn",
+        "miro.com",
+        "mega.nz", "mega.io",
+        "proton.me", "protonmail.com",
+        "tutanota.com",
+        "mullvad.net",
+        "expressvpn.com", "nordvpn.com",
+        "surfshark.com"
+    ];
+
+    for (var i = 0; i < blocked.length; i++) {
+        if (dnsDomainIs(host, blocked[i]) ||
+            shExpMatch(host, "*." + blocked[i])) {
+            return "PROXY 114.212.234.221:1088";
+        }
+    }
+
+    // ===== DEFAULT: Direct (Chinese sites mostly) =====
+    // Use proxy for unknown foreign sites to be safe
+    return "PROXY 114.212.234.221:1088; DIRECT";
+}
